@@ -15,7 +15,7 @@ FLUSH PRIVILEGES;
 
 -- Table: QuanLy
 CREATE TABLE QuanLy (
-    maQuanLy VARCHAR(50) PRIMARY KEY,
+    maQuanLy INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     hoTen VARCHAR(100) NOT NULL,
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE QuanLy (
 
 -- Table: NhanVien
 CREATE TABLE NhanVien (
-    maNhanVien VARCHAR(50) PRIMARY KEY,
+    maNhanVien INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     hoTen VARCHAR(100) NOT NULL,
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE NhanVien (
 
 -- Table: KhachHang
 CREATE TABLE KhachHang (
-    maKhachHang VARCHAR(50) PRIMARY KEY,
+    maKhachHang INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     hoTen VARCHAR(100) NOT NULL,
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -48,16 +48,16 @@ CREATE TABLE KhachHang (
 
 -- Table: TaiKhoan
 CREATE TABLE TaiKhoan (
-    maTaiKhoan VARCHAR(50) PRIMARY KEY,
+    maTaiKhoan VARCHAR(50) PRIMARY KEY NOT NULL,
     tenDangNhap VARCHAR(50) NOT NULL UNIQUE,
     matKhau VARCHAR(60) NOT NULL,
     ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
     trangThai VARCHAR(50),
     vaiTro VARCHAR(20),
     xacMinhEmail BOOLEAN DEFAULT FALSE,
-    maKhachHang VARCHAR(50),
-    maQuanLy VARCHAR(50),
-    maNhanVien VARCHAR(50),
+    maKhachHang INT,
+    maQuanLy INT,
+    maNhanVien INT,
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
     FOREIGN KEY (maQuanLy) REFERENCES QuanLy(maQuanLy),
     FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien)
@@ -65,13 +65,13 @@ CREATE TABLE TaiKhoan (
 
 -- Table: DanhMucSuKien
 CREATE TABLE DanhMucSuKien (
-    maDanhMuc VARCHAR(50) PRIMARY KEY,
+    maDanhMuc INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     tenDanhMuc VARCHAR(50) NOT NULL
 );
 
 -- Table: SuKien
 CREATE TABLE SuKien (
-    maSuKien VARCHAR(50) PRIMARY KEY,
+    maSuKien INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     tenSuKien VARCHAR(100) NOT NULL,
     moTa TEXT,
     anhSuKien VARCHAR(70),
@@ -82,32 +82,32 @@ CREATE TABLE SuKien (
     ngayTaoSuKien DATETIME DEFAULT CURRENT_TIMESTAMP,
     ngayBatDau DATETIME,
     ngayKetThuc DATETIME,
-    maDanhMuc VARCHAR(50),
+    maDanhMuc INT,
     FOREIGN KEY (maDanhMuc) REFERENCES DanhMucSuKien(maDanhMuc)
 );
 
 -- Table: DangKy
 CREATE TABLE DangKy (
-    maDangKy VARCHAR(50) PRIMARY KEY,
+    maDangKy VARCHAR(50) PRIMARY KEY NOT NULL,
     ngayDangKy DATETIME DEFAULT CURRENT_TIMESTAMP,
     viTriGhe VARCHAR(10) NOT NULL,
     trangThaiDangKy VARCHAR(20) DEFAULT 'Đang xử lý',
-    maKhachHang VARCHAR(50),
-    maSuKien VARCHAR(50),
+    maKhachHang INT,
+    maSuKien INT,
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
     FOREIGN KEY (maSuKien) REFERENCES SuKien(maSuKien)
 );
 
 -- Table: HoaDon
 CREATE TABLE HoaDon (
-    maHoaDon VARCHAR(50) PRIMARY KEY,
+    maHoaDon VARCHAR(50) PRIMARY KEY NOT NULL,
     ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
     trangThaiHoaDon VARCHAR(20) DEFAULT 'Chưa thanh toán',
     tongTien DECIMAL(18,2),
     thoiGianHieuLuc DATETIME NOT NULL,
     thoiGianThanhCong DATETIME NOT NULL,
     phuongThucThanhToan VARCHAR(20) DEFAULT 'Qua ngân hàng',
-    maKhachHang VARCHAR(50),
+    maKhachHang INT,
     maDangKy VARCHAR(50),
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
     FOREIGN KEY (maDangKy) REFERENCES DangKy(maDangKy)
@@ -115,31 +115,31 @@ CREATE TABLE HoaDon (
 
 -- Table: DanhGia
 CREATE TABLE DanhGia (
-    maDanhGia VARCHAR(50) PRIMARY KEY,
+    maDanhGia INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     loaiDanhGia INT,
     binhLuan TEXT NOT NULL,
     ngayDanhGia DATETIME DEFAULT CURRENT_TIMESTAMP,
-    maKhachHang VARCHAR(50),
-    maSuKien VARCHAR(50),
+    maKhachHang INT,
+    maSuKien INT,
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
     FOREIGN KEY (maSuKien) REFERENCES SuKien(maSuKien)
 );
 
 -- Table: CauHoi
 CREATE TABLE CauHoi (
-    maCauHoi VARCHAR(50) PRIMARY KEY,
+    maCauHoi INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     noiDungCauHoi TEXT NOT NULL,
     noiDungTraLoi TEXT NOT NULL,
     trangThai VARCHAR(20) DEFAULT 'Chưa xử lý',
-    maKhachHang VARCHAR(50),
-    maSuKien VARCHAR(50),
+    maKhachHang INT,
+    maSuKien INT,
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
     FOREIGN KEY (maSuKien) REFERENCES SuKien(maSuKien)
 );
 
 -- Table: DiemDanh
 CREATE TABLE DiemDanh (
-    maDiemDanh VARCHAR(50) PRIMARY KEY,
+    maDiemDanh VARCHAR(50) PRIMARY KEY NOT NULL,
     ngayTaove DATETIME DEFAULT CURRENT_TIMESTAMP,
     ngayDiemDanh DATETIME NOT NULL,
     trangThaiDiemDanh VARCHAR(20) DEFAULT 'Vắng mặt',
@@ -150,19 +150,19 @@ CREATE TABLE DiemDanh (
 
 -- Table: Ticket
 CREATE TABLE Ticket (
-    maHoTro VARCHAR(50) PRIMARY KEY,
+    maHoTro INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     tenKhachHang VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     noiDung TEXT NOT NULL,
     noiDungGiaiDap TEXT,
     trangThai VARCHAR(20) DEFAULT 'Chưa xử lý',
-    maNhanVien VARCHAR(50),
+    maNhanVien INT,
     FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien)
 );
 
 -- Table Token
 CREATE TABLE Token (
-    maToken VARCHAR(50) PRIMARY KEY,
+    maToken VARCHAR(50) PRIMARY KEY NOT NULL,
     loaiToken VARCHAR(20) NOT NULL,
     thoiDiemHetHan DATETIME,
     maTaiKhoan VARCHAR(50),
