@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -20,8 +20,10 @@ public class DangKy {
     private LocalDateTime ngayDangKy;
 
     @NotBlank(message = "Please enter your desired seat")
+    @Size(max = 10, message = "Seat cannot exceed 10 characters")
     private String viTriGhe;
 
+    @Pattern(regexp = "^(Đang xử lí|Đã hủy|Đã điểm danh)$", message = "Invalid status")
     private String trangThaiDangKy;
 
     private String maKhachHang;

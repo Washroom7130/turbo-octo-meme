@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -18,15 +19,16 @@ public class SuKien {
     private String maSuKien;
 
     @NotBlank(message = "Please enter event name")
+    @Size(max = 100, message = "Event's name cannot exceed 100 characters")
     private String tenSuKien;
 
-    @NotBlank(message = "Please enter event description")
+    //@NotBlank(message = "Please enter event description")
     private String moTa;
 
     @Pattern(regexp = "^/img/[^/]{1,29}.(png|jpg|jpeg)$", message = "Invalid image name")
     private String anhSuKien;
 
-    @NotBlank(message = "Please enter a location")
+    //@NotBlank(message = "Please enter a location")
     private String diaDiem;
 
     @Min(value = 0, message = "Please enter a non-negative number")
@@ -45,4 +47,7 @@ public class SuKien {
 
     @NotBlank(message = "Please enter category id")
     private String maDanhMuc;
+
+    @Pattern(regexp = "^(Còn chỗ|Hết chỗ|Hết hạn|Đang diễn ra|Đã kết thúc)$", message = "Invalid status")
+    private String trangThaiSuKien;
 }

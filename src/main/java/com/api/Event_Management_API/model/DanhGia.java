@@ -8,7 +8,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Entity
@@ -22,6 +21,7 @@ public class DanhGia {
     @Max(value = 5, message = "Please enter your rating")
     private Integer loaiDanhGia;
 
+    @NotBlank(message = "Please enter your comment")
     private String binhLuan;
     private LocalDateTime ngayDanhGia;
 

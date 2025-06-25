@@ -4,7 +4,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -29,6 +28,7 @@ public class Ticket {
     @NotBlank(message = "Please enter your answer")
     private String noiDungGiaiDap;
 
+    @Pattern(regexp = "^(Chưa xử lí|Đã xử lí)$", message = "Please enter a valid status")
     private String trangThai;
     private String maNhanVien;
 }
