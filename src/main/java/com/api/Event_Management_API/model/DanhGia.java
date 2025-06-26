@@ -15,7 +15,7 @@ import lombok.Data;
 @Data
 public class DanhGia {
     @Id
-    private String maDanhGia;
+    private Integer maDanhGia;
 
     @Min(value = 1, message = "Please enter your rating")
     @Max(value = 5, message = "Please enter your rating")

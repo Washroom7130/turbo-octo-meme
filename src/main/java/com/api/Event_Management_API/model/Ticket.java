@@ -13,7 +13,7 @@ import lombok.Data;
 @Data
 public class Ticket {
     @Id
-    private String maHoTro;
+    private Integer maHoTro;
 
     @NotBlank(message = "Please enter your name")
     private String tenKhachHang;

@@ -1,6 +1,8 @@
 package com.api.Event_Management_API.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -16,7 +18,8 @@ import lombok.Data;
 @Data
 public class KhachHang {
     @Id
-    private String maKhachHang;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer maKhachHang;
 
     @NotBlank(message = "Please enter name")
     @Size(max = 100, message = "Name cannot exceed 100 characters")
@@ -34,7 +37,7 @@ public class KhachHang {
     @Pattern(regexp = "^\\d{10}$", message = "Please enter a valid phone number")
     private String phone;
 
-    @Pattern(regexp = "^(Nam|Nữ)$", message = "Please enter a valid gender")
+    @Pattern(regexp = "^(Nam|Nữ|Khác)$", message = "Please enter a valid gender")
     private String gioiTinh;
 
     @Min(value = 18, message = "minimum age is 18")

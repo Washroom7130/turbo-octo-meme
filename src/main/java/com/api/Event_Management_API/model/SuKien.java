@@ -16,7 +16,7 @@ import lombok.Data;
 @Data
 public class SuKien {
     @Id
-    private String maSuKien;
+    private Integer maSuKien;
 
     @NotBlank(message = "Please enter event name")
     @Size(max = 100, message = "Event's name cannot exceed 100 characters")

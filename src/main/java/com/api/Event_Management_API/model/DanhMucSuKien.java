@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class DanhMucSuKien {
     @Id
-    private String maDanhMuc;
+    private Integer maDanhMuc;
 
     @NotBlank(message = "Please enter category name")
     private String tenDanhMuc;

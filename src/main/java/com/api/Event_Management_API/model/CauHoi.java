@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 public class CauHoi {
     @Id
-    private String maCauHoi;
+    private Integer maCauHoi;
 
     @NotBlank(message = "Please enter your question")
     private String notDungCauHoi;

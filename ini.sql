@@ -20,7 +20,7 @@ CREATE TABLE QuanLy (
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    gioiTinh VARCHAR(10),
+    gioiTinh VARCHAR(10) NOT NULL,
     soTuoi INT NOT NULL
 );
 
@@ -31,7 +31,7 @@ CREATE TABLE NhanVien (
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    gioiTinh VARCHAR(10),
+    gioiTinh VARCHAR(10) NOT NULL,
     soTuoi INT NOT NULL
 );
 
@@ -42,7 +42,7 @@ CREATE TABLE KhachHang (
     diaChi VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    gioiTinh VARCHAR(10),
+    gioiTinh VARCHAR(10) NOT NULL,
     soTuoi INT NOT NULL
 );
 

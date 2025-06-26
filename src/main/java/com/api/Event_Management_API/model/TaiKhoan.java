@@ -18,7 +18,7 @@ public class TaiKhoan {
     private String maTaiKhoan;
 
     @NotBlank(message = "Please enter username")
-    @Size(max = 50, message = "Username cannot exceed 100 characters")
+    @Size(max = 50, message = "Username cannot exceed 50 characters")
     private String tenDangNhap;
 
     @NotBlank(message = "Please enter password")
@@ -34,8 +34,8 @@ public class TaiKhoan {
 
     private Boolean xacMinhEmail;
 
-    private String maQuanLy;
-    private String maNhanVien;
-    private String maKhachHang;
+    private Integer maQuanLy;
+    private Integer maNhanVien;
+    private Integer maKhachHang;
     
 }
