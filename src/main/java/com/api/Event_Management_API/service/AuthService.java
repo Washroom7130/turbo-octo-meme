@@ -1,8 +1,12 @@
 package com.api.Event_Management_API.service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +25,18 @@ public class AuthService {
     private final TaiKhoanRepository taiKhoanRepo;
     private final TokenRepository tokenRepo;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    public AuthService(KhachHangRepository khachHangRepo, TaiKhoanRepository taiKhoanRepo, TokenRepository tokenRepo, PasswordEncoder passwordEncoder) {
+    public AuthService(KhachHangRepository khachHangRepo, 
+                        TaiKhoanRepository taiKhoanRepo, 
+                        TokenRepository tokenRepo, 
+                        PasswordEncoder passwordEncoder,
+                        EmailService emailService) {
         this.khachHangRepo = khachHangRepo;
         this.taiKhoanRepo = taiKhoanRepo;
         this.tokenRepo = tokenRepo;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public void register(RegisterRequest request) {
@@ -59,5 +69,40 @@ public class AuthService {
         token.setThoiDiemHetHan(LocalDateTime.now().plusDays(3));
         token.setMaTaiKhoan(tk.getMaTaiKhoan());
         tokenRepo.save(token);
+
+        emailService.sendVerificationEmail(request.getEmail(), token.getMaToken());
+    }
+
+    public ResponseEntity<?> verifyToken(String tokenId) {
+        Optional<Token> optionalToken = tokenRepo.findById(tokenId);
+
+        if (optionalToken.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token invalid or outdated"));
+        }
+
+        Token token = optionalToken.get();
+
+        // Check if token type is AccountRegister
+        if (!"AccountRegister".equals(token.getLoaiToken())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token invalid or outdated"));
+        }
+
+        // Check if token has expired
+        if (token.getThoiDiemHetHan() == null || token.getThoiDiemHetHan().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token invalid or outdated"));
+        }
+
+        Optional<TaiKhoan> optionalTaikhoan = taiKhoanRepo.findById(token.getMaTaiKhoan());
+
+        if (optionalTaikhoan.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Account not found"));
+        }
+
+        TaiKhoan taiKhoan = optionalTaikhoan.get();
+        taiKhoan.setXacMinhEmail(true);
+        taiKhoanRepo.save(taiKhoan);
+        tokenRepo.delete(token);
+
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 }

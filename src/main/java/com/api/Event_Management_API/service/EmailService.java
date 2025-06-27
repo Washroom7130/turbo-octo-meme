@@ -11,12 +11,16 @@ public class EmailService {
     @Autowired
     private JavaMailSender javaMailSender;
 
-    public void sendTestEmail() {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo("denisot388@exitbit.com");  // change address as needed for testing
-        message.setSubject("Spring Boot Email Test");
-        message.setText("If you received this, email config is correct!");
+    public void sendVerificationEmail(String to, String token) {
+        String subject = "Xác minh tài khoản của bạn";
+        String verificationUrl = "http://localhost:5555/api/auth/verify/" + token;
+        String message = "Cảm ơn bạn đã đăng ký!\n\nVui lòng xác minh tài khoản của bạn bằng cách nhấp vào liên kết dưới đây:\n" + verificationUrl + "\n\nLiên kết này sẽ hết hạn sau 3 ngày.";
 
-        javaMailSender.send(message);
+        SimpleMailMessage email = new SimpleMailMessage();
+        email.setTo(to);
+        email.setSubject(subject);
+        email.setText(message);
+
+        javaMailSender.send(email);
     }
 }
