@@ -23,4 +23,19 @@ public class EmailService {
 
         javaMailSender.send(email);
     }
+
+    public void sendPasswordResetEmail(String to, String token) {
+        String resetLink = "http://your-frontend-domain.com/reset_password/" + token;
+
+        String subject = "Reset Your Password";
+        String message = "Click the link below to reset your password:\n" + resetLink +
+                "\n\nThis link will expire in 30 minutes.";
+
+        SimpleMailMessage email = new SimpleMailMessage();
+        email.setTo(to);
+        email.setSubject(subject);
+        email.setText(message);
+
+        javaMailSender.send(email);
+    }
 }

@@ -13,5 +13,6 @@ public class EnvLoader {
         System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
         System.setProperty("GMAIL_USERNAME", dotenv.get("GMAIL_USERNAME"));
         System.setProperty("GMAIL_PASSWORD", dotenv.get("GMAIL_PASSWORD"));
+        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
     }
 }

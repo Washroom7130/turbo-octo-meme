@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.api.Event_Management_API.dto.LoginRequest;
 import com.api.Event_Management_API.dto.RegisterRequest;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.TaiKhoan;
@@ -17,6 +18,7 @@ import com.api.Event_Management_API.model.Token;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.repository.TokenRepository;
+import com.api.Event_Management_API.util.JwtUtil;
 import com.api.Event_Management_API.util.RandomGeneratorUtil;
 
 @Service
@@ -26,17 +28,20 @@ public class AuthService {
     private final TokenRepository tokenRepo;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final JwtUtil jwtUtil;
 
     public AuthService(KhachHangRepository khachHangRepo, 
                         TaiKhoanRepository taiKhoanRepo, 
                         TokenRepository tokenRepo, 
                         PasswordEncoder passwordEncoder,
-                        EmailService emailService) {
+                        EmailService emailService,
+                        JwtUtil jwtUtil) {
         this.khachHangRepo = khachHangRepo;
         this.taiKhoanRepo = taiKhoanRepo;
         this.tokenRepo = tokenRepo;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.jwtUtil = jwtUtil;
     }
 
     public void register(RegisterRequest request) {
@@ -104,5 +109,64 @@ public class AuthService {
         tokenRepo.delete(token);
 
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
+
+    public ResponseEntity<?> login(LoginRequest loginRequest) {
+        Optional<TaiKhoan> optionalTaikhoan = taiKhoanRepo.findByTenDangNhap(loginRequest.getUsername());
+
+        if (optionalTaikhoan.isEmpty() ||
+            !passwordEncoder.matches(loginRequest.getPassword(), optionalTaikhoan.get().getMatKhau())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect credentials"));
+            }
+        
+        TaiKhoan taiKhoan = optionalTaikhoan.get();
+
+        if (!Boolean.TRUE.equals(taiKhoan.getXacMinhEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Please verify your email first"));
+        }
+
+        String token = jwtUtil.generateToken(
+            taiKhoan.getMaTaiKhoan(),
+            taiKhoan.getTenDangNhap(),
+            taiKhoan.getVaiTro()
+        );
+
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    public ResponseEntity<?> forgotPassword(String identifier) {
+        // Check for username first
+        Optional<TaiKhoan> optionalTaiKhoan = taiKhoanRepo.findByTenDangNhap(identifier);
+
+        if (optionalTaiKhoan.isEmpty()) {
+            // If username not found try email
+            Optional<KhachHang> kh = khachHangRepo.findByEmail(identifier);
+            if (kh.isPresent()) {
+                optionalTaiKhoan = taiKhoanRepo.findByMaKhachHang(kh.get().getMaKhachHang());
+            }
+        }
+
+        if (optionalTaiKhoan.isPresent()) {
+            TaiKhoan taiKhoan = optionalTaiKhoan.get();
+
+            Token token = new Token();
+            token.setMaToken(RandomGeneratorUtil.generateToken(50));
+            token.setLoaiToken("ResetPassword");
+            token.setThoiDiemHetHan(LocalDateTime.now().plusMinutes(30));
+            token.setMaTaiKhoan(taiKhoan.getMaTaiKhoan());
+
+            tokenRepo.save(token);
+
+            // Send email
+            String email = khachHangRepo.findById(taiKhoan.getMaKhachHang())
+                            .map(KhachHang::getEmail)
+                            .orElse(null);
+            if (email != null) {
+                emailService.sendPasswordResetEmail(email, token.getMaToken());
+            }
+
+        }
+
+        return ResponseEntity.ok(Map.of("message", "We have sent a reset link to your email"));
     }
 }

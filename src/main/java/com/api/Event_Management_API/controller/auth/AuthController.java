@@ -1,5 +1,7 @@
 package com.api.Event_Management_API.controller.auth;
 
+import com.api.Event_Management_API.dto.ForgotPasswordRequest;
+import com.api.Event_Management_API.dto.LoginRequest;
 import com.api.Event_Management_API.dto.RegisterRequest;
 import com.api.Event_Management_API.service.AuthService;
 
@@ -51,5 +53,24 @@ public class AuthController {
     @GetMapping("/verify/{tokenID}")
     public ResponseEntity<?> verifyAccount(@PathVariable("tokenID") String tokenID) {
         return authService.verifyToken(tokenID);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
+        if (result.hasErrors()) {
+            String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
+        }
+
+        return authService.login(loginRequest);
+    }
+
+    @PostMapping("/forgot_password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, BindingResult result) {
+        if (result.hasErrors()) {
+            String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
+        }
+        return authService.forgotPassword(request.getIdentifier());
     }
 }
