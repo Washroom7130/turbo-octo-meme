@@ -7,11 +7,13 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.LoginRequest;
 import com.api.Event_Management_API.dto.RegisterRequest;
+import com.api.Event_Management_API.dto.ResetPasswordRequest;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.model.Token;
@@ -20,6 +22,9 @@ import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.repository.TokenRepository;
 import com.api.Event_Management_API.util.JwtUtil;
 import com.api.Event_Management_API.util.RandomGeneratorUtil;
+import com.api.Event_Management_API.util.RateLimiterService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class AuthService {
@@ -29,19 +34,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
+    private final RateLimiterService rateLimiterService;
 
     public AuthService(KhachHangRepository khachHangRepo, 
                         TaiKhoanRepository taiKhoanRepo, 
                         TokenRepository tokenRepo, 
                         PasswordEncoder passwordEncoder,
                         EmailService emailService,
-                        JwtUtil jwtUtil) {
+                        JwtUtil jwtUtil,
+                        RateLimiterService rateLimiterService) {
         this.khachHangRepo = khachHangRepo;
         this.taiKhoanRepo = taiKhoanRepo;
         this.tokenRepo = tokenRepo;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.jwtUtil = jwtUtil;
+        this.rateLimiterService = rateLimiterService;
     }
 
     public void register(RegisterRequest request) {
@@ -111,7 +119,14 @@ public class AuthService {
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 
-    public ResponseEntity<?> login(LoginRequest loginRequest) {
+    public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest.getRemoteAddr();
+        String rateLimitKey = "login:" + clientIp;
+
+        if (!rateLimiterService.isAllowed(rateLimitKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests, please try again later"));
+        }
+
         Optional<TaiKhoan> optionalTaikhoan = taiKhoanRepo.findByTenDangNhap(loginRequest.getUsername());
 
         if (optionalTaikhoan.isEmpty() ||
@@ -134,7 +149,8 @@ public class AuthService {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    public ResponseEntity<?> forgotPassword(String identifier) {
+    @Async
+    public void asyncForgotPasswordHandler(String identifier) {
         // Check for username first
         Optional<TaiKhoan> optionalTaiKhoan = taiKhoanRepo.findByTenDangNhap(identifier);
 
@@ -166,7 +182,58 @@ public class AuthService {
             }
 
         }
-
-        return ResponseEntity.ok(Map.of("message", "We have sent a reset link to your email"));
     }
+    
+    public ResponseEntity<?> forgotPassword(String identifier, HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest.getRemoteAddr();
+        String rateLimitKey = "forgotPassword:" + clientIp;
+
+        if (!rateLimiterService.isAllowed(rateLimitKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests, please try again later"));
+        } 
+
+        ResponseEntity<?> response = ResponseEntity.ok(Map.of("message", "We have sent a reset link to your email"));
+
+        // Using async to prevent username/email enumeration
+        asyncForgotPasswordHandler(identifier);
+
+        return response;
+    }
+
+    public ResponseEntity<?> resetPassword(String tokenValue, ResetPasswordRequest request) {
+        Optional<Token> optionalToken = tokenRepo.findById(tokenValue);
+
+        if (optionalToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid or expired token"));
+        }
+
+        Token token = optionalToken.get();
+
+        // Check if token has correct type and not expired
+        if (!"ResetPassword".equals(token.getLoaiToken()) ||
+            token.getThoiDiemHetHan().isBefore(LocalDateTime.now())) 
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid or expired token"));
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "New passwords don't match"));
+        }
+
+        // Fetch account and check if exist
+        Optional<TaiKhoan> optionalTaiKhoan = taiKhoanRepo.findById(token.getMaTaiKhoan());
+
+        if (optionalTaiKhoan.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Account not found"));
+        }
+
+        TaiKhoan taiKhoan = optionalTaiKhoan.get();
+        taiKhoan.setMatKhau(passwordEncoder.encode(request.getNewPassword()));
+        taiKhoanRepo.save(taiKhoan);
+
+        // Delete used token
+        tokenRepo.delete(token);
+
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }   
 }

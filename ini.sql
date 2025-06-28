@@ -168,3 +168,35 @@ CREATE TABLE Token (
     maTaiKhoan VARCHAR(50),
     FOREIGN KEY (maTaiKhoan) REFERENCES TaiKhoan(maTaiKhoan)
 );
+
+-- Insert test admin data
+-- Insert into QuanLy
+INSERT INTO QuanLy (hoTen, diaChi, email, phone, gioiTinh, soTuoi)
+VALUES (
+    'redacted',
+    'redacted',
+    'redacted@abuse.com',
+    'redacted',
+    'Nam',
+    18
+);
+
+-- Insert into TaiKhoan
+INSERT INTO TaiKhoan (
+    maTaiKhoan,
+    tenDangNhap,
+    matKhau,
+    trangThai,
+    vaiTro,
+    xacMinhEmail,
+    maQuanLy
+)
+VALUES (
+    '66a580dc-3400-479d-a0cd-3e0fedcdf8db',
+    'admin',
+    '$2a$10$fd8mAqdcMoQPn/4R7sxeJugSmslPKWjLh4ahB/Wqxeosi.CgK38Py',
+    'Hoạt động',
+    'QuanLy',
+    TRUE,
+    LAST_INSERT_ID()
+);

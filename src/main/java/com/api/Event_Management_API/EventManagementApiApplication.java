@@ -3,6 +3,7 @@ package com.api.Event_Management_API;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.api.Event_Management_API.service.EmailService;
 
@@ -12,6 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@EnableAsync
 @ComponentScan(basePackages = "com.api.Event_Management_API")
 @EnableJpaRepositories(basePackages = "com.api.Event_Management_API.repository")
 @EntityScan(basePackages = "com.api.Event_Management_API.model")

@@ -3,8 +3,10 @@ package com.api.Event_Management_API.controller.auth;
 import com.api.Event_Management_API.dto.ForgotPasswordRequest;
 import com.api.Event_Management_API.dto.LoginRequest;
 import com.api.Event_Management_API.dto.RegisterRequest;
+import com.api.Event_Management_API.dto.ResetPasswordRequest;
 import com.api.Event_Management_API.service.AuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import java.util.Map;
@@ -56,21 +58,31 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result, HttpServletRequest httpRequest) {
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
         }
 
-        return authService.login(loginRequest);
+        return authService.login(loginRequest, httpRequest);
     }
 
     @PostMapping("/forgot_password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, BindingResult result) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, BindingResult result, HttpServletRequest httpRequest) {
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
         }
-        return authService.forgotPassword(request.getIdentifier());
+        return authService.forgotPassword(request.getIdentifier(), httpRequest);
+    }
+
+    @PostMapping("/reset_password/{token}")
+    public ResponseEntity<?> resetPassword(@Valid @PathVariable("token") String token, @RequestBody ResetPasswordRequest request, BindingResult result) {
+        if (result.hasErrors()) {
+            String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
+        }
+
+        return authService.resetPassword(token, request);
     }
 }
