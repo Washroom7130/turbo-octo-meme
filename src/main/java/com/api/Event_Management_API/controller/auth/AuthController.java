@@ -7,11 +7,13 @@ import com.api.Event_Management_API.dto.ResetPasswordRequest;
 import com.api.Event_Management_API.service.AuthService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,5 +86,20 @@ public class AuthController {
         }
 
         return authService.resetPassword(token, request);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // Delete the cookie by setting maxAge to 0
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                                .httpOnly(true)
+                                .secure(true)
+                                .path("/")
+                                .sameSite("None")
+                                .maxAge(0) // instantly expire
+                                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+
+        return ResponseEntity.ok(Map.of("message", "Logout successfully"));
     }
 }

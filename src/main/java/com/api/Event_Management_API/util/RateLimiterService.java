@@ -26,21 +26,15 @@ public class RateLimiterService {
 
     public boolean isAllowed(String key) {
         long currentTime = Instant.now().toEpochMilli();
-
-        requestMap.compute(key, (k, counter) -> {
+    
+        return requestMap.compute(key, (k, counter) -> {
             if (counter == null || currentTime - counter.startTime > WINDOW_SIZE_MS) {
                 return new RequestCounter(1, currentTime);
             }
-
-            if (counter.requestCount < MAX_REQUESTS) {
-                counter.requestCount++;
-                return counter;
-            }
-
+    
+            counter.requestCount++;
             return counter;
-        });
-
-        RequestCounter current = requestMap.get(key);
-        return current.requestCount <= MAX_REQUESTS;
+        }).requestCount <= MAX_REQUESTS;
     }
+    
 }

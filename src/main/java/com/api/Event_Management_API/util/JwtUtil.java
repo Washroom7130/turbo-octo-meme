@@ -4,8 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -54,5 +56,9 @@ public class JwtUtil {
             .build()
             .parseClaimsJws(token)
             .getBody();
+    }
+
+    public static List<SimpleGrantedAuthority> mapRoleToAuthorities(String role) {
+        return List.of(new SimpleGrantedAuthority(role));
     }
 }

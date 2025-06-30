@@ -6,10 +6,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpHeaders;
 
 import com.api.Event_Management_API.dto.LoginRequest;
 import com.api.Event_Management_API.dto.RegisterRequest;
@@ -146,7 +148,18 @@ public class AuthService {
             taiKhoan.getVaiTro()
         );
 
-        return ResponseEntity.ok(Map.of("token", token));
+        ResponseCookie cookie = ResponseCookie.from("token", token)
+                                .httpOnly(true)
+                                .secure(true)
+                                .path("/")
+                                .maxAge(7 * 60 * 60 * 24)
+                                .sameSite("None")
+                                .build();
+
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "Login successful"));
     }
 
     @Async
