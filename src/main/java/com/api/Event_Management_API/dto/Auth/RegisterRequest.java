@@ -1,4 +1,4 @@
-package com.api.Event_Management_API.dto;
+package com.api.Event_Management_API.dto.Auth;
 
 import com.api.Event_Management_API.validation.UniqueEmail;
 import com.api.Event_Management_API.validation.UniqueUsername;

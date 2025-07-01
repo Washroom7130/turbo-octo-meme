@@ -29,7 +29,9 @@ public class SecurityConfig {
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // since JWT is stateless
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // allow for these path
+                // allow for these path
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/danhmucsukien/get/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

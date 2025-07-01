@@ -13,9 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpHeaders;
 
-import com.api.Event_Management_API.dto.LoginRequest;
-import com.api.Event_Management_API.dto.RegisterRequest;
-import com.api.Event_Management_API.dto.ResetPasswordRequest;
+import com.api.Event_Management_API.dto.Auth.LoginRequest;
+import com.api.Event_Management_API.dto.Auth.RegisterRequest;
+import com.api.Event_Management_API.dto.Auth.ResetPasswordRequest;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.model.Token;

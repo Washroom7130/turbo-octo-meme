@@ -1,9 +1,9 @@
 package com.api.Event_Management_API.controller.auth;
 
-import com.api.Event_Management_API.dto.ForgotPasswordRequest;
-import com.api.Event_Management_API.dto.LoginRequest;
-import com.api.Event_Management_API.dto.RegisterRequest;
-import com.api.Event_Management_API.dto.ResetPasswordRequest;
+import com.api.Event_Management_API.dto.Auth.ForgotPasswordRequest;
+import com.api.Event_Management_API.dto.Auth.LoginRequest;
+import com.api.Event_Management_API.dto.Auth.RegisterRequest;
+import com.api.Event_Management_API.dto.Auth.ResetPasswordRequest;
 import com.api.Event_Management_API.service.AuthService;
 
 import jakarta.servlet.http.HttpServletRequest;
