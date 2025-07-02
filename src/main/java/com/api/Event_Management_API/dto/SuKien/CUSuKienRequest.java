@@ -1,5 +1,7 @@
 package com.api.Event_Management_API.dto.SuKien;
 
+import java.time.LocalDateTime;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.*;
@@ -12,6 +14,7 @@ public class CUSuKienRequest {
     @Size(max = 100, message = "Event's name cannot exceed 100 characters")
     private String tenSuKien;
 
+    @NotBlank(message = "Please enter event description")
     private String moTa;
 
     //@Pattern(regexp = "^[^/.]{1,29}.(png|jpg|jpeg)$", message = "Invalid image name")
@@ -27,11 +30,11 @@ public class CUSuKienRequest {
     private Integer luongChoNgoi;
 
     @NotNull(message = "Please enter start day")
-    private String ngayBatDau;
+    private LocalDateTime ngayBatDau;
 
     @NotNull(message = "Please enter end day")
-    private String ngayKetThuc;
+    private LocalDateTime ngayKetThuc;
 
-    @NotBlank(message = "Please enter category id")
-    private String maDanhMuc;
+    //@NotBlank(message = "Please enter category id")
+    private Integer maDanhMuc;
 }

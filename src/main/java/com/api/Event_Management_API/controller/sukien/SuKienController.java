@@ -7,12 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.Event_Management_API.dto.SuKien.CUSuKienRequest;
+import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
 import com.api.Event_Management_API.service.SuKienService;
 
 import jakarta.validation.Valid;
@@ -26,12 +29,19 @@ public class SuKienController {
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
     @PostMapping("/add")
-    public ResponseEntity<?> addSuKien(@Valid @ModelAttribute CUSuKienRequest request, BindingResult result) {
+    public ResponseEntity<?> addSuKien(@Valid @ModelAttribute CUSuKienRequest request
+                                        , BindingResult result) {
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
         }
 
         return suKienService.addSuKien(request);
+    }
+
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
+    @PostMapping("/update/{maSuKien}")
+    public ResponseEntity<?> updateSuKien(@ModelAttribute UpdateSuKienRequest request, @PathVariable Integer maSuKien) {
+        return suKienService.updateSuKien(request, maSuKien);
     }
 }

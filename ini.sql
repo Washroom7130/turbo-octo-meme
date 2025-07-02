@@ -73,15 +73,15 @@ CREATE TABLE DanhMucSuKien (
 CREATE TABLE SuKien (
     maSuKien INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     tenSuKien VARCHAR(100) NOT NULL,
-    moTa TEXT,
+    moTa TEXT NOT NULL,
     anhSuKien VARCHAR(70),
-    diaDiem VARCHAR(255),
+    diaDiem VARCHAR(255) NOT NULL,
     trangThaiSuKien VARCHAR(20) DEFAULT 'Còn chỗ',
-    phiThamGia DECIMAL(18,2),
-    luongChoNgoi INT,
+    phiThamGia DECIMAL(18,2) NOT NULL,
+    luongChoNgoi INT NOT NULL,
     ngayTaoSuKien DATETIME DEFAULT CURRENT_TIMESTAMP,
-    ngayBatDau DATETIME,
-    ngayKetThuc DATETIME,
+    ngayBatDau DATETIME NOT NULL,
+    ngayKetThuc DATETIME NOT NULL,
     maDanhMuc INT,
     FOREIGN KEY (maDanhMuc) REFERENCES DanhMucSuKien(maDanhMuc)
 );
@@ -132,8 +132,10 @@ CREATE TABLE CauHoi (
     noiDungTraLoi TEXT NOT NULL,
     trangThai VARCHAR(20) DEFAULT 'Chưa xử lý',
     maKhachHang INT,
+    maNhanVien INT,
     maSuKien INT,
     FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
+    FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien),
     FOREIGN KEY (maSuKien) REFERENCES SuKien(maSuKien)
 );
 
@@ -141,7 +143,7 @@ CREATE TABLE CauHoi (
 CREATE TABLE DiemDanh (
     maDiemDanh VARCHAR(50) PRIMARY KEY NOT NULL,
     ngayTaove DATETIME DEFAULT CURRENT_TIMESTAMP,
-    ngayDiemDanh DATETIME NOT NULL,
+    ngayDiemDanh DATETIME,
     trangThaiDiemDanh VARCHAR(20) DEFAULT 'Vắng mặt',
     viTriGheNgoi VARCHAR(10) NOT NULL,
     maDangKy VARCHAR(50),

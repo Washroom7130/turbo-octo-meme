@@ -1,11 +1,14 @@
 package com.api.Event_Management_API.util;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,8 +23,15 @@ public class FileUploadUtil {
 
         String originalFilename = file.getOriginalFilename();
 
+        // check filename format
         if (originalFilename == null || !FILE_NAME_PATTERN.matcher(originalFilename).matches()) {
             throw new IllegalArgumentException("Invalid filename. Filename must be less than 30 characters and contains either .jpg, .jpeg, .png");
+        }
+
+        // check MIME type
+        BufferedImage image = ImageIO.read(file.getInputStream());
+        if (image == null) {
+            throw new IllegalArgumentException("Invalid file type. Uploaded file must be an image");
         }
 
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));

@@ -3,10 +3,13 @@ package com.api.Event_Management_API.model;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -16,6 +19,7 @@ import lombok.Data;
 @Data
 public class SuKien {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer maSuKien;
 
     @NotBlank(message = "Please enter event name")
@@ -25,7 +29,7 @@ public class SuKien {
     //@NotBlank(message = "Please enter event description")
     private String moTa;
 
-    @Pattern(regexp = "^/img/[^/]{1,29}.(png|jpg|jpeg)$", message = "Invalid image name")
+    //@Pattern(regexp = "^/img/[^/]{1,30}.(png|jpg|jpeg)$", message = "Invalid image name")
     private String anhSuKien;
 
     //@NotBlank(message = "Please enter a location")
@@ -39,14 +43,14 @@ public class SuKien {
     
     private LocalDateTime ngayTaoSuKien;
 
-    @NotBlank(message = "Please enter start day")
+    @NotNull(message = "Please enter start day")
     private LocalDateTime ngayBatDau;
 
-    @NotBlank(message = "Please enter end day")
+    @NotNull(message = "Please enter end day")
     private LocalDateTime ngayKetThuc;
 
-    @NotBlank(message = "Please enter category id")
-    private String maDanhMuc;
+    //@NotBlank(message = "Please enter category id")
+    private Integer maDanhMuc;
 
     @Pattern(regexp = "^(Còn chỗ|Hết chỗ|Hết hạn|Đang diễn ra|Đã kết thúc)$", message = "Invalid status")
     private String trangThaiSuKien;

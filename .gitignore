@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 .env
 upload/img/
+ini.sql
 
 ### STS ###
 .apt_generated
