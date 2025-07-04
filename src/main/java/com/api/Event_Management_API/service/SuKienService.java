@@ -2,15 +2,20 @@ package com.api.Event_Management_API.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.SuKien.CUSuKienRequest;
+import com.api.Event_Management_API.dto.SuKien.SuKienResponse;
 import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
@@ -134,5 +139,79 @@ public class SuKienService {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Can't save file"));
         }
+    }
+
+    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<SuKien> suKienPage;
+
+        if (maDanhMuc != null) {
+            if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
+            }
+            suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
+        } else {
+            suKienPage = suKienRepo.findAll(pageable);
+        }
+
+        Page<SuKienResponse> responsePage = suKienPage.map(sk -> new SuKienResponse(
+            sk.getMaSuKien(),
+            sk.getTenSuKien(),
+            sk.getMoTa(),
+            sk.getAnhSuKien(),
+            sk.getDiaDiem(),
+            sk.getPhiThamGia(),
+            sk.getLuongChoNgoi(),
+            sk.getNgayBatDau(),
+            sk.getNgayKetThuc(),
+            sk.getMaDanhMuc()
+        ));
+
+        return ResponseEntity.ok(responsePage);
+    }
+
+    public ResponseEntity<?> getOne(Integer maSuKien) {
+        Optional<SuKien> suKienOptional = suKienRepo.findById(maSuKien);
+
+        if (suKienOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        }
+
+        SuKien suKien = suKienOptional.get();
+        SuKienResponse suKienResponse = new SuKienResponse(
+            suKien.getMaSuKien(),
+            suKien.getTenSuKien(),
+            suKien.getMoTa(),
+            suKien.getAnhSuKien(),
+            suKien.getDiaDiem(),
+            suKien.getPhiThamGia(),
+            suKien.getLuongChoNgoi(),
+            suKien.getNgayBatDau(),
+            suKien.getNgayKetThuc(),
+            suKien.getMaDanhMuc()
+        );
+
+        return ResponseEntity.ok(suKienResponse);
+    }
+
+    public ResponseEntity<?> cancel(Integer maSuKien) {
+        Optional<SuKien> suKienOptional = suKienRepo.findById(maSuKien);
+
+        // Check if exist
+        if (suKienOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        }
+
+        // Check if cancel-able
+        SuKien suKien = suKienOptional.get();
+        if (!suKien.getTrangThaiSuKien().equals("Còn chỗ") && !suKien.getTrangThaiSuKien().equals("Hết chỗ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Cannot cancel event that has already started"));
+        }
+
+        suKien.setTrangThaiSuKien("Hủy bỏ");
+        suKienRepo.save(suKien);
+
+        return ResponseEntity.ok(Map.of("message", "Event cancel successfully"));
     }
 }

@@ -52,6 +52,6 @@ public class SuKien {
     //@NotBlank(message = "Please enter category id")
     private Integer maDanhMuc;
 
-    @Pattern(regexp = "^(Còn chỗ|Hết chỗ|Hết hạn|Đang diễn ra|Đã kết thúc)$", message = "Invalid status")
+    @Pattern(regexp = "^(Còn chỗ|Hết chỗ|Hết hạn|Đang diễn ra|Đã kết thúc|Hủy bỏ)$", message = "Invalid status")
     private String trangThaiSuKien;
 }

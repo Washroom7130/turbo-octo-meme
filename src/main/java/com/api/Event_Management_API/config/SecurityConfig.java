@@ -32,6 +32,7 @@ public class SecurityConfig {
                 // allow for these path
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/danhmucsukien/get/**").permitAll()
+                .requestMatchers("/api/sukien/get/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

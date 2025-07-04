@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,5 +45,21 @@ public class SuKienController {
     @PostMapping("/update/{maSuKien}")
     public ResponseEntity<?> updateSuKien(@ModelAttribute UpdateSuKienRequest request, @PathVariable Integer maSuKien) {
         return suKienService.updateSuKien(request, maSuKien);
+    }
+
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
+    @PutMapping("/cancel/{maSuKien}")
+    public ResponseEntity<?> cancelSuKien(@PathVariable Integer maSuKien) {
+        return suKienService.cancel(maSuKien);
+    }
+
+    @GetMapping("/get/all")
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) Integer maDanhMuc) {
+        return suKienService.getAll(page, size, maDanhMuc);
+    }
+
+    @GetMapping("/get/{maSuKien}")
+    public ResponseEntity<?> getOne(@PathVariable Integer maSuKien) {
+        return suKienService.getOne(maSuKien);
     }
 }

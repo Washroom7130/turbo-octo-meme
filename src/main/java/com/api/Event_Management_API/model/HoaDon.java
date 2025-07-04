@@ -18,7 +18,7 @@ public class HoaDon {
 
     private LocalDateTime ngayTao;
 
-    @Pattern(regexp = "^(Chưa thanh toán|Đã thanh toán)$", message = "Invalid status")
+    @Pattern(regexp = "^(Chưa thanh toán|Đã thanh toán|Đã hủy)$", message = "Invalid status")
     private String trangThaiHoaDon;
 
     @Min(value = 0, message = "Total sum cannot be negative")

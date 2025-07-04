@@ -23,7 +23,7 @@ public class DangKy {
     @Size(max = 10, message = "Seat cannot exceed 10 characters")
     private String viTriGhe;
 
-    @Pattern(regexp = "^(Đang xử lí|Đã hủy|Đã điểm danh)$", message = "Invalid status")
+    @Pattern(regexp = "^(Đang xử lí|Đã hủy|Thành công|Đã điểm danh)$", message = "Invalid status")
     private String trangThaiDangKy;
 
     private String maKhachHang;

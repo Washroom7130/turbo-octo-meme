@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import com.api.Event_Management_API.dto.DanhMucSuKien.GetDanhMucResponse;
 import com.api.Event_Management_API.service.DanhMucSuKienService;
 
 import jakarta.validation.Valid;
+import jakarta.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/api/danhmucsukien")
@@ -48,6 +50,12 @@ public class DanhMucSuKienController {
         }
 
         return danhMucSuKienService.updateDanhMuc(request, maDanhMuc);
+    }
+
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
+    @DeleteMapping("/delete/{maDanhMuc}")
+    public ResponseEntity<?> deleteDanhMuc(@PathVariable Integer maDanhMuc) {
+        return danhMucSuKienService.delete(maDanhMuc);
     }
 
     @GetMapping("/get/all")

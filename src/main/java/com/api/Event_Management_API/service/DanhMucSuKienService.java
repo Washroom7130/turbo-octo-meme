@@ -14,6 +14,7 @@ import com.api.Event_Management_API.dto.DanhMucSuKien.CreateDanhMucRequest;
 import com.api.Event_Management_API.dto.DanhMucSuKien.GetDanhMucResponse;
 import com.api.Event_Management_API.model.DanhMucSuKien;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
+import com.api.Event_Management_API.repository.SuKienRepository;
 
 import ch.qos.logback.core.joran.util.beans.BeanUtil;
 
@@ -22,6 +23,9 @@ public class DanhMucSuKienService {
     
     @Autowired
     private DanhMucSuKienRepository danhMucSuKienRepo;
+
+    @Autowired
+    private SuKienRepository suKienRepo;
 
     public ResponseEntity<?> createDanhMuc(CreateDanhMucRequest request) {
         // Check for duplicated name
@@ -79,5 +83,22 @@ public class DanhMucSuKienService {
         GetDanhMucResponse response = new GetDanhMucResponse();
         BeanUtils.copyProperties(danhMucSuKien, response);
         return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<?> delete(Integer maDanhMuc) {
+        Optional<DanhMucSuKien> danhMucOptional = danhMucSuKienRepo.findById(maDanhMuc);
+
+        // Check if category exist
+        if(danhMucOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Category not found"));
+        }
+
+        // Check if category in use
+        if (suKienRepo.existsByMaDanhMuc(maDanhMuc)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Category is in use"));
+        }
+
+        danhMucSuKienRepo.deleteById(maDanhMuc);
+        return ResponseEntity.ok(Map.of("message", "Category deleted successfully"));
     }
 }

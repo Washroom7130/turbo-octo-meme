@@ -11,10 +11,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class JwtUtil {
@@ -61,4 +64,24 @@ public class JwtUtil {
     public static List<SimpleGrantedAuthority> mapRoleToAuthorities(String role) {
         return List.of(new SimpleGrantedAuthority(role));
     }
+
+    public String extractIdFromRequest(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+
+        for (Cookie cookie : request.getCookies()) {
+            if ("token".equals(cookie.getName())) {
+                try {
+                    String jwt = cookie.getValue();
+                    Claims claims = validateToken(jwt);
+                    return claims.get("maTaiKhoan", String.class); // use your custom claim key here
+                } catch (Exception e) {
+                    return null; // optionally log this
+                }
+            }
+        }
+
+        return null;
+    }
+
+
 }
