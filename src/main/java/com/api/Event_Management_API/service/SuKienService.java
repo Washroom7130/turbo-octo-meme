@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,23 +16,46 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.SuKien.CUSuKienRequest;
+import com.api.Event_Management_API.dto.SuKien.DangKySuKienRequest;
 import com.api.Event_Management_API.dto.SuKien.SuKienResponse;
 import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
+import com.api.Event_Management_API.model.DangKy;
+import com.api.Event_Management_API.model.HoaDon;
+import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
+import com.api.Event_Management_API.model.TaiKhoan;
+import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
+import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.SuKienRepository;
+import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.util.FileUploadUtil;
+import com.api.Event_Management_API.util.JwtUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class SuKienService {
 
     private final SuKienRepository suKienRepo;
     private final DanhMucSuKienRepository danhMucRepo;
+    private final TaiKhoanRepository taiKhoanRepo;
+    private final KhachHangRepository khachHangRepo;
+    private final DangKyRepository dangKyRepo;
+    private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
-                        DanhMucSuKienRepository danhMucRepo) {
+                        DanhMucSuKienRepository danhMucRepo,
+                        TaiKhoanRepository taiKhoanRepo,
+                        KhachHangRepository khachHangRepo,
+                        DangKyRepository dangKyRepo,
+                        JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
+        this.taiKhoanRepo = taiKhoanRepo;
+        this.khachHangRepo = khachHangRepo;
+        this.dangKyRepo = dangKyRepo;
+        this.jwtUtil = jwtUtil;
     }
 
     private void applyUpdates(UpdateSuKienRequest request, SuKien suKien) {
@@ -213,5 +237,69 @@ public class SuKienService {
         suKienRepo.save(suKien);
 
         return ResponseEntity.ok(Map.of("message", "Event cancel successfully"));
+    }
+
+    public ResponseEntity<?> dangky(DangKySuKienRequest request, Integer maSuKien, HttpServletRequest httpServletRequest) {
+        Optional<SuKien> suKienOptional = suKienRepo.findById(maSuKien);
+
+        // Check if exist
+        if (suKienOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        }
+
+        SuKien suKien = suKienOptional.get();
+        String status = suKien.getTrangThaiSuKien();
+
+        if (!status.equals("Còn chỗ")) {
+            String msg = switch (status) {
+                case "Hết chỗ" -> "Event is full";
+                case "Đã hủy" -> "Event has been cancelled";
+                case "Đang diễn ra" -> "Event is in progress";
+                case "Đã kết thúc" -> "Event has ended";
+                default -> "Event is not available for registration";
+            };
+            return ResponseEntity.badRequest().body(Map.of("error", msg));
+        }
+
+        // Extract maTaiKhoan from JWT
+        String maTaiKhoan = jwtUtil.extractIdFromRequest(httpServletRequest);
+        if (maTaiKhoan == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid token"));
+        }
+
+        // Find user
+        Optional<TaiKhoan> taiKhoanOptional = taiKhoanRepo.findById(maTaiKhoan);
+        if (taiKhoanOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+        }
+
+        // TODO: add check soLuongCho here later
+
+        Optional<KhachHang> khachHang = khachHangRepo.findById(taiKhoanOptional.get().getMaKhachHang());
+
+        // Create DangKy
+        DangKy dangKy = new DangKy();
+        dangKy.setMaDangKy(UUID.randomUUID().toString());
+        dangKy.setNgayDangKy(LocalDateTime.now());
+        dangKy.setViTriGhe(request.getViTriGhe());
+        dangKy.setTrangThaiDangKy("Thành công");
+        dangKy.setMaKhachHang(khachHang.get().getMaKhachHang());
+        dangKy.setMaSuKien(maSuKien);
+
+        dangKyRepo.save(dangKy);
+
+        HoaDon hoaDon = new HoaDon();
+        hoaDon.setMaHoaDon(UUID.randomUUID().toString());
+        hoaDon.setNgayTao(LocalDateTime.now());
+        hoaDon.setTrangThaiHoaDon("Đã thanh toán");
+        hoaDon.setTongTien(suKien.getPhiThamGia());
+        hoaDon.setThoiGianHieuLuc(LocalDateTime.now()); // change this later
+        hoaDon.setThoiGianThanhCong(LocalDateTime.now()); // change this later
+        hoaDon.setPhuongThucThanhToan(request.getPhuongThucThanhToan());
+        hoaDon.setMaKhachHang(khachHang.get().getMaKhachHang());
+        hoaDon.setMaDangKy(dangKy.getMaDangKy());
+
+        return ResponseEntity.ok(Map.of("message", "Successfully sign up"));
+
     }
 }

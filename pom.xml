@@ -128,6 +128,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!--PayOS integration-->
+		<dependency>
+			<groupId>vn.payos</groupId>
+			<artifactId>payos-java</artifactId>
+			<version>1.0.3</version>
+		</dependency>
 
 	</dependencies>
 

@@ -28,7 +28,7 @@ public class HoaDon {
 
     @Pattern(regexp = "^(Qua ngân hàng|Ví điện tử)$", message = "Invalid payment method")
     private String phuongThucThanhToan;
-    private String maKhachHang;
+    private Integer maKhachHang;
     private String maDangKy;
     private String maNhanVien;
 }

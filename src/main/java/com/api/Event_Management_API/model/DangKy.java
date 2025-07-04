@@ -26,6 +26,6 @@ public class DangKy {
     @Pattern(regexp = "^(Đang xử lí|Đã hủy|Thành công|Đã điểm danh)$", message = "Invalid status")
     private String trangThaiDangKy;
 
-    private String maKhachHang;
-    private String maSuKien;
+    private Integer maKhachHang;
+    private Integer maSuKien;
 }

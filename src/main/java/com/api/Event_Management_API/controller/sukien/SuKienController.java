@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.Event_Management_API.dto.SuKien.CUSuKienRequest;
+import com.api.Event_Management_API.dto.SuKien.DangKySuKienRequest;
 import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
 import com.api.Event_Management_API.service.SuKienService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -51,6 +53,12 @@ public class SuKienController {
     @PutMapping("/cancel/{maSuKien}")
     public ResponseEntity<?> cancelSuKien(@PathVariable Integer maSuKien) {
         return suKienService.cancel(maSuKien);
+    }
+
+    @PreAuthorize("hasAnyAuthority('KhachHang')")
+    @PostMapping("/dangky/{maSuKien}")
+    public ResponseEntity<?> dangKy(@PathVariable Integer maSuKien, @RequestBody @Valid DangKySuKienRequest request, HttpServletRequest httpServletRequest) {
+        return suKienService.dangky(request, maSuKien, httpServletRequest);
     }
 
     @GetMapping("/get/all")
