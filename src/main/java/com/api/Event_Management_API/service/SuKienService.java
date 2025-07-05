@@ -261,6 +261,11 @@ public class SuKienService {
             return ResponseEntity.badRequest().body(Map.of("error", msg));
         }
 
+        // Check if seat has taken
+        if (dangKyRepo.existsByMaSuKienAndViTriGhe(maSuKien, request.getViTriGhe())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Seat has already been taken"));
+        }
+
         // Extract maTaiKhoan from JWT
         String maTaiKhoan = jwtUtil.extractIdFromRequest(httpServletRequest);
         if (maTaiKhoan == null) {
@@ -273,9 +278,12 @@ public class SuKienService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
         }
 
-        // TODO: add check soLuongCho here later
-
         Optional<KhachHang> khachHang = khachHangRepo.findById(taiKhoanOptional.get().getMaKhachHang());
+
+        // Check if user has already signed up
+        if (dangKyRepo.existsByMaKhachHangAndMaSuKien(khachHang.get().getMaKhachHang(), maSuKien)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "You have already signed up for this event"));
+        }
 
         // Create DangKy
         DangKy dangKy = new DangKy();
@@ -298,6 +306,13 @@ public class SuKienService {
         hoaDon.setPhuongThucThanhToan(request.getPhuongThucThanhToan());
         hoaDon.setMaKhachHang(khachHang.get().getMaKhachHang());
         hoaDon.setMaDangKy(dangKy.getMaDangKy());
+
+        long currentSuccessfulRegistration = dangKyRepo.countByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công");
+
+        if (currentSuccessfulRegistration >= suKien.getLuongChoNgoi()) {
+            suKien.setTrangThaiSuKien("Hết chỗ");
+            suKienRepo.save(suKien);
+        }
 
         return ResponseEntity.ok(Map.of("message", "Successfully sign up"));
 
