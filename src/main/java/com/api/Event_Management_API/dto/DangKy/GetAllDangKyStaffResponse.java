@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetAllDangKyStaffResponse {
+    private String maDangKy;
     private LocalDateTime ngayDangKy;
     private String viTriGhe;
     private String trangThaiDangKy;

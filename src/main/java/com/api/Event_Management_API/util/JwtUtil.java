@@ -66,22 +66,26 @@ public class JwtUtil {
     }
 
     public String extractIdFromRequest(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
+        Claims claims = extractClaimsFromRequest(request);
+        return claims != null ? claims.get("maTaiKhoan", String.class) : null;
+    }
 
+    public Claims extractClaimsFromRequest(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+    
         for (Cookie cookie : request.getCookies()) {
             if ("token".equals(cookie.getName())) {
                 try {
                     String jwt = cookie.getValue();
-                    Claims claims = validateToken(jwt);
-                    return claims.get("maTaiKhoan", String.class); // use your custom claim key here
+                    return validateToken(jwt);
                 } catch (Exception e) {
-                    return null; // optionally log this
+                    return null;
                 }
             }
         }
-
+    
         return null;
     }
-
+    
 
 }

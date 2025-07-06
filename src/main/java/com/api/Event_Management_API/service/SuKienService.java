@@ -26,6 +26,7 @@ import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
+import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.SuKienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
@@ -42,6 +43,7 @@ public class SuKienService {
     private final TaiKhoanRepository taiKhoanRepo;
     private final KhachHangRepository khachHangRepo;
     private final DangKyRepository dangKyRepo;
+    private final HoaDonRepository hoaDonRepo;
     private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
@@ -49,12 +51,14 @@ public class SuKienService {
                         TaiKhoanRepository taiKhoanRepo,
                         KhachHangRepository khachHangRepo,
                         DangKyRepository dangKyRepo,
+                        HoaDonRepository hoadDonRepo,
                         JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
         this.taiKhoanRepo = taiKhoanRepo;
         this.khachHangRepo = khachHangRepo;
         this.dangKyRepo = dangKyRepo;
+        this.hoaDonRepo = hoadDonRepo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -306,6 +310,8 @@ public class SuKienService {
         hoaDon.setPhuongThucThanhToan(request.getPhuongThucThanhToan());
         hoaDon.setMaKhachHang(khachHang.get().getMaKhachHang());
         hoaDon.setMaDangKy(dangKy.getMaDangKy());
+
+        hoaDonRepo.save(hoaDon);
 
         long currentSuccessfulRegistration = dangKyRepo.countByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công");
 

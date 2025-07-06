@@ -30,5 +30,5 @@ public class HoaDon {
     private String phuongThucThanhToan;
     private Integer maKhachHang;
     private String maDangKy;
-    private String maNhanVien;
+    //private String maNhanVien;
 }

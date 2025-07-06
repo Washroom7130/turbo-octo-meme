@@ -1,7 +1,6 @@
-package com.api.Event_Management_API.controller.dangky;
+package com.api.Event_Management_API.controller.hoadon;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,28 +9,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.api.Event_Management_API.dto.DangKy.GetAllDangKyStaffResponse;
-import com.api.Event_Management_API.service.DangKyService;
+import com.api.Event_Management_API.service.HoaDonService;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.websocket.server.PathParam;
 
 @RestController
-@RequestMapping("/api/dangky")
-public class DangKyController {
-
+@RequestMapping("/api/hoadon")
+public class HoaDonController {
+    
     @Autowired
-    private DangKyService dangKyService;
+    private HoaDonService hoaDonService;
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
     @GetMapping("/get/all")
     public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
-        return dangKyService.getAll(page, size, request);
+        return hoaDonService.getAll(page, size, request);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
-    @GetMapping("/get/{maDangKy}")
-    public ResponseEntity<?> getOne(@PathVariable String maDangKy, HttpServletRequest request) {
-        return dangKyService.getOne(maDangKy, request);
+    @GetMapping("/get/{maHoaDon}")
+    public ResponseEntity<?> getOne(@PathVariable String maHoaDon, HttpServletRequest request) {
+        return hoaDonService.getOne(maHoaDon, request);
     }
 }
