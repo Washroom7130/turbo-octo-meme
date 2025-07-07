@@ -1,6 +1,8 @@
 package com.api.Event_Management_API.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -13,6 +15,7 @@ import lombok.Data;
 @Data
 public class Ticket {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer maHoTro;
 
     @NotBlank(message = "Please enter your name")
@@ -25,10 +28,10 @@ public class Ticket {
     @NotBlank(message = "Please enter your content")
     private String noiDung;
 
-    @NotBlank(message = "Please enter your answer")
+    //@NotBlank(message = "Please enter your answer")
     private String noiDungGiaiDap;
 
-    @Pattern(regexp = "^(Chưa xử lí|Đã xử lí)$", message = "Please enter a valid status")
+    @Pattern(regexp = "^(Chưa xử lý|Đã xử lí)$", message = "Please enter a valid status")
     private String trangThai;
-    private String maNhanVien;
+    private Integer maNhanVien;
 }

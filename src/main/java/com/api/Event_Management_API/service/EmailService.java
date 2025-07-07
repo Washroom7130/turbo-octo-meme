@@ -40,4 +40,15 @@ public class EmailService {
 
         javaMailSender.send(email);
     }
+
+    public void sendTicketConfirmationEmail(String to, String tenKhachHang) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Support Request Received");
+        message.setText("Hi " + tenKhachHang + ",\n\n"
+                + "We have received your support request. Our staff will respond shortly.\n\n"
+                + "Thank you.");
+
+        javaMailSender.send(message);
+    }
 }
