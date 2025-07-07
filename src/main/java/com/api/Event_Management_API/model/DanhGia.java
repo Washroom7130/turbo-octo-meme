@@ -3,6 +3,8 @@ package com.api.Event_Management_API.model;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
@@ -15,6 +17,7 @@ import lombok.Data;
 @Data
 public class DanhGia {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer maDanhGia;
 
     @Min(value = 1, message = "Please enter your rating")
@@ -25,6 +28,6 @@ public class DanhGia {
     private String binhLuan;
     private LocalDateTime ngayDanhGia;
 
-    private String maKhachHang;
-    private String maSuKien;
+    private Integer maKhachHang;
+    private Integer maSuKien;
 }

@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/danhmucsukien/get/**").permitAll()
                 .requestMatchers("/api/sukien/get/**").permitAll()
+                .requestMatchers("/api/danhgia/sukien/*/get/all").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

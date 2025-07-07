@@ -11,5 +11,6 @@ public interface DangKyRepository extends JpaRepository<DangKy, String> {
     boolean existsByMaKhachHangAndMaSuKien (Integer maKhachHang, Integer maSuKien);
     boolean existsByMaSuKienAndViTriGhe (Integer maSuKien, String viTriGhe);
     Page<DangKy> findAllByMaKhachHang(Integer maKhachHang, Pageable pageable);
+    boolean existsByMaKhachHangAndMaSuKienAndTrangThaiDangKy(Integer maKhachHang, Integer maSuKien, String trangThaiDangKy);
 
 }
