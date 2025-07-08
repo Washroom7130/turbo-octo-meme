@@ -24,10 +24,10 @@ public class TaiKhoan {
     @NotBlank(message = "Please enter password")
     private String MatKhau;
 
-    @Pattern(regexp = "^(Hoạt Động|Dừng hoạt động)$", message = "Invalid status")
+    //@Pattern(regexp = "^(Hoạt Động|Dừng hoạt động)$", message = "Invalid status")
     private String trangThai;
 
-    @Pattern(regexp = "^(QuanLy|NhanVien|KhachHang)$", message = "Invalid role")
+    //@Pattern(regexp = "^(QuanLy|NhanVien|KhachHang)$", message = "Invalid role")
     private String vaiTro;
 
     private LocalDateTime ngayTao;

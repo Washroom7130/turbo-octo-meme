@@ -51,4 +51,13 @@ public class EmailService {
 
         javaMailSender.send(message);
     }
+
+    public void sendResponseTicketEmail(String to, String tenKhachHang, String response, String tenNhanVien) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Ticket reply");
+        message.setText("Chào " + tenKhachHang + "\n\n" + response + "\n\n" + tenNhanVien);
+
+        javaMailSender.send(message);
+    }
 }

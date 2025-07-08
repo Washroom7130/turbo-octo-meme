@@ -3,10 +3,14 @@ package com.api.Event_Management_API.service;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.api.Event_Management_API.dto.Ticket.GetTicketResponse;
 import com.api.Event_Management_API.dto.Ticket.SendAnswerRequest;
 import com.api.Event_Management_API.dto.Ticket.SendTicketRequest;
 import com.api.Event_Management_API.model.NhanVien;
@@ -64,12 +68,16 @@ public class TicketService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Ticket not found"));
         }
 
-        String replyAuthor;
+        String replyAuthor = "Nhân viên";
         Integer maNhanVien = null;
         Optional<TaiKhoan> tk = taiKhoanRepo.findById(maTaiKhoan);
 
         if (tk.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
+        }
+
+        if (ticketOpt.get().getTrangThai().equals("Đã xử lí")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Ticket has already been handled"));
         }
 
         if ("NhanVien".equals(vaiTro)) {
@@ -86,6 +94,71 @@ public class TicketService {
         ticket.setTrangThai("Đã xử lí");
         ticket.setMaNhanVien(maNhanVien);
 
-        // TODO: continue this part
+        ticketRepo.save(ticket);
+
+        // Send email
+        emailService.sendResponseTicketEmail(ticket.getEmail(), ticket.getTenKhachHang(), request.getAnswer(), replyAuthor);
+
+        return ResponseEntity.ok(Map.of("message", "Ticket response has been sent"));
+    }
+
+    public ResponseEntity<?> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Ticket> pageResult = ticketRepo.findAll(pageable);
+
+        Page<GetTicketResponse> pageResponse = pageResult.map(ticket -> {
+            String tenNhanVien = "Unknown";
+
+            if (ticket.getMaNhanVien() != null) {
+                tenNhanVien = nhanVienRepo.findById(ticket.getMaNhanVien())
+                    .map(NhanVien::getHoTen)
+                    .orElse("Unknown");
+            } else if ("Đã xử lí".equals(ticket.getTrangThai())) {
+                tenNhanVien = "Quản lí";
+            }
+
+            return new GetTicketResponse(
+                ticket.getMaHoTro(),
+                ticket.getTenKhachHang(),
+                ticket.getEmail(),
+                ticket.getNoiDung(),
+                ticket.getNoiDungGiaiDap(),
+                ticket.getTrangThai(),
+                tenNhanVien
+            );
+        });
+
+        return ResponseEntity.ok(pageResponse);
+    }
+
+    public ResponseEntity<?> getOne(Integer maHoTro) {
+        Optional<Ticket> ticketOptional = ticketRepo.findById(maHoTro);
+
+        if (ticketOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Ticket not found"));
+        }
+
+        Ticket ticket = ticketOptional.get();
+        String tenNhanVien = "Unknown";
+
+        if (ticket.getMaNhanVien() != null) {
+            tenNhanVien = nhanVienRepo.findById(ticket.getMaNhanVien())
+                .map(NhanVien::getHoTen)
+                .orElse("Unknown");
+        } else if ("Đã xử lí".equals(ticket.getTrangThai())) {
+            tenNhanVien = "Quản lí";
+        }
+
+        GetTicketResponse response = new GetTicketResponse(
+            ticket.getMaHoTro(),
+            ticket.getTenKhachHang(),
+            ticket.getEmail(),
+            ticket.getNoiDung(),
+            ticket.getNoiDungGiaiDap(),
+            ticket.getTrangThai(),
+            tenNhanVien
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
