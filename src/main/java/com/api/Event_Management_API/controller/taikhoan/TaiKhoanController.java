@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +53,18 @@ public class TaiKhoanController {
     @PostMapping("/deactivate")
     public ResponseEntity<?> deactivate(HttpServletRequest request) {
         return taiKhoanService.deactive(request);
+    }
+
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
+    @PostMapping("/{action}/{maKhachHang}")
+    public ResponseEntity<?> updateCustomerStatus(@PathVariable String action, @PathVariable Integer maKhachHang) {
+        return taiKhoanService.updateCustomerStatus(action, maKhachHang);
+    }
+
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
+    @GetMapping("/me")
+    public ResponseEntity<?> me(HttpServletRequest request) {
+        return taiKhoanService.getPersonalInfo(request);
     }
 
 }

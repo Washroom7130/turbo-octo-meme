@@ -1,6 +1,8 @@
 package com.api.Event_Management_API.service;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import com.api.Event_Management_API.repository.NhanVienRepository;
 import com.api.Event_Management_API.repository.QuanLyRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.util.JwtUtil;
+import com.api.Event_Management_API.util.ThongTinCaNhanUtil;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -139,8 +142,63 @@ public class TaiKhoanService {
         taiKhoan.setTrangThai("Dừng hoạt động");
         taiKhoanRepo.save(taiKhoan);
 
-        // TODO: add auto-logout here
-
         return ResponseEntity.ok(Map.of("message", "Account deactivated successfully"));
+    }
+
+    public ResponseEntity<?> updateCustomerStatus(String action, Integer maKhachHang) {
+        if (!action.equals("activate") && !action.equals("deactivate")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid action"));
+        }
+
+        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findByMaKhachHang(maKhachHang);
+        if (tkOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Customer not found"));
+        }
+
+        TaiKhoan taiKhoan = tkOpt.get();
+        taiKhoan.setTrangThai(action.equals("activate") ? "Hoạt Động" : "Dừng hoạt động");
+
+        taiKhoanRepo.save(taiKhoan);
+        
+        return ResponseEntity.ok(Map.of("message", "Account has been " + (action.equals("activate") ? "activated" : "deactivated")));
+
+    }
+
+    public ResponseEntity<?> getPersonalInfo(HttpServletRequest request) {
+        Claims claims = jwtUtil.extractClaimsFromRequest(request);
+        String maTaiKhoan = claims.get("maTaiKhoan", String.class);
+
+        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findById(maTaiKhoan);
+        if (tkOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
+        }
+
+        TaiKhoan taiKhoan = tkOpt.get();
+        String vaiTro = taiKhoan.getVaiTro();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("tenDangNhap", taiKhoan.getTenDangNhap());
+        response.put("trangThai", taiKhoan.getTrangThai());
+        response.put("vaiTro", vaiTro);
+
+        switch(vaiTro) {
+            case "KhachHang" -> {
+                var kh = khachHangRepo.findById(taiKhoan.getMaKhachHang()).orElse(null);
+                if (kh != null) ThongTinCaNhanUtil.getThongTinCaNhan(response, kh);
+            }
+            case "NhanVien" -> {
+                var nv = nhanVienRepo.findById(taiKhoan.getMaNhanVien()).orElse(null);
+                if (nv != null) ThongTinCaNhanUtil.getThongTinCaNhan(response, nv);
+            }
+            case "QuanLy" -> {
+                var ql = quanLyRepo.findById(taiKhoan.getMaQuanLy()).orElse(null);
+                if (ql != null) ThongTinCaNhanUtil.getThongTinCaNhan(response, ql);
+            }
+            default -> {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid role"));
+            }
+        }
+
+        return ResponseEntity.ok(response);
     }
 }
