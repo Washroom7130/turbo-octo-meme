@@ -1,0 +1,43 @@
+package com.api.Event_Management_API.controller.admin;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.api.Event_Management_API.dto.Admin.AddNhanVienRequest;
+import com.api.Event_Management_API.service.AdminService;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/admin")
+public class AdminController {
+    
+    @Autowired
+    private AdminService adminService;
+
+    @PreAuthorize("hasAnyAuthority('QuanLy')")
+    @PostMapping("/nhanvien/add")
+    public ResponseEntity<?> addNhanVien(@Valid @RequestBody AddNhanVienRequest request, BindingResult result) {
+        if (result.hasErrors()) {
+            String message = result.getFieldErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(Map.of("error", message));
+        }
+
+        return adminService.addNhanVien(request);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy')")
+    @PostMapping("/nhanvien/{action}/{maNhanVien}")
+    public ResponseEntity<?> updateStaffStatus(@PathVariable String action, @PathVariable Integer maNhanVien) {
+        return adminService.updateStaffStatus(action, maNhanVien);
+    }
+}

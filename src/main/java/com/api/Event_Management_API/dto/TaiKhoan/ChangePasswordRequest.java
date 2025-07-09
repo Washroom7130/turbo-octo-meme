@@ -1,4 +1,4 @@
-package com.api.Event_Management_API.controller.taikhoan;
+package com.api.Event_Management_API.dto.TaiKhoan;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

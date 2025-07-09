@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api.Event_Management_API.dto.TaiKhoan.ChangePasswordRequest;
 import com.api.Event_Management_API.dto.TaiKhoan.UpdateTaiKhoanRequest;
 import com.api.Event_Management_API.service.TaiKhoanService;
 

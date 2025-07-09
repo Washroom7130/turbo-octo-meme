@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.api.Event_Management_API.controller.taikhoan.ChangePasswordRequest;
+import com.api.Event_Management_API.dto.TaiKhoan.ChangePasswordRequest;
 import com.api.Event_Management_API.dto.TaiKhoan.UpdateTaiKhoanRequest;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.TaiKhoan;
