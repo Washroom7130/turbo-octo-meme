@@ -138,8 +138,14 @@ public class AuthService {
         
         TaiKhoan taiKhoan = optionalTaikhoan.get();
 
+        // Disallow login for account that hasn't verified email
         if (!Boolean.TRUE.equals(taiKhoan.getXacMinhEmail())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Please verify your email first"));
+        }
+
+        // Disallow login for account that has been deactivated
+        if (!"Hoạt Động".equals(taiKhoan.getTrangThai())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect credentials"));
         }
 
         String token = jwtUtil.generateToken(

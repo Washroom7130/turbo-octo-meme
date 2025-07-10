@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.Event_Management_API.dto.Admin.AddNhanVienRequest;
@@ -39,5 +41,29 @@ public class AdminController {
     @PostMapping("/nhanvien/{action}/{maNhanVien}")
     public ResponseEntity<?> updateStaffStatus(@PathVariable String action, @PathVariable Integer maNhanVien) {
         return adminService.updateStaffStatus(action, maNhanVien);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy')")
+    @GetMapping("/nhanvien/get/all")
+    public ResponseEntity<?> getAllNhanVien(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        return adminService.getAllNV(page, size);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy')")
+    @GetMapping("/nhanvien/get/{maNhanVien}")
+    public ResponseEntity<?> getOneNhanVien(@PathVariable Integer maNhanVien) {
+        return adminService.getOneNV(maNhanVien);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")
+    @GetMapping("/khachhang/get/all")
+    public ResponseEntity<?> getAllKhachHang(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        return adminService.getAllKH(page, size);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")
+    @GetMapping("/khachhang/get/{maKhachHang}")
+    public ResponseEntity<?> getOneKhachHang(@PathVariable Integer maKhachHang) {
+        return adminService.getOneKH(maKhachHang);
     }
 }

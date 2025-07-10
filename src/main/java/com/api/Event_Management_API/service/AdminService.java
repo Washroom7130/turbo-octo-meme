@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.Admin.AddNhanVienRequest;
 import com.api.Event_Management_API.dto.Admin.GetTaiKhoanListResponse;
+import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.NhanVien;
 import com.api.Event_Management_API.model.TaiKhoan;
+import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.NhanVienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
 
@@ -24,13 +26,16 @@ import com.api.Event_Management_API.repository.TaiKhoanRepository;
 public class AdminService {
     private final TaiKhoanRepository taiKhoanRepo;
     private final NhanVienRepository nhanVienRepo;
+    private final KhachHangRepository khachHangRepo;
     private final PasswordEncoder passwordEncoder;
 
     public AdminService(TaiKhoanRepository taiKhoanRepo,
                         NhanVienRepository nhanVienRepo,
+                        KhachHangRepository khachHangRepo,
                         PasswordEncoder passwordEncoder) {
         this.taiKhoanRepo = taiKhoanRepo;
         this.nhanVienRepo = nhanVienRepo;
+        this.khachHangRepo = khachHangRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -80,17 +85,115 @@ public class AdminService {
         return ResponseEntity.ok(Map.of("message", "Account has been " + (action.equals("activate") ? "activated" : "deactivated")));
     }
 
-    public ResponseEntity<?> getAllTK(int page, int size) {
+    public ResponseEntity<?> getAllNV(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<TaiKhoan> pageResult = taiKhoanRepo.findAll(pageable);
+        Page<TaiKhoan> pageResult = taiKhoanRepo.findByVaiTroEquals("NhanVien", pageable);
 
         Page<GetTaiKhoanListResponse> responsePage = pageResult.map(tk -> {
             GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
             dto.setTenDangNhap(tk.getTenDangNhap());
-            dto.setTrangThai(tk.getTrangThai());
             dto.setVaiTro(tk.getVaiTro());
+            dto.setTrangThai(tk.getTrangThai());
 
-            // TODO: continue this part
-        })
+            if (tk.getMaNhanVien() != null) {
+                nhanVienRepo.findById(tk.getMaNhanVien()).ifPresent(nv -> {
+                    dto.setHoTen(nv.getHoTen());
+                    dto.setDiaChi(nv.getDiaChi());
+                    dto.setEmail(nv.getEmail());
+                    dto.setPhone(nv.getPhone());
+                    dto.setGioiTinh(nv.getGioiTinh());
+                    dto.setSoTuoi(nv.getSoTuoi());
+                });
+            }
+
+            return dto;
+        });
+
+        return ResponseEntity.ok(responsePage);
+    }
+
+    public ResponseEntity<?> getOneNV(Integer maNhanVien) {
+        Optional<NhanVien> nvOpt = nhanVienRepo.findById(maNhanVien);
+        if (nvOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Staff not found"));
+        }
+
+        NhanVien nv = nvOpt.get();
+
+        TaiKhoan tk = taiKhoanRepo.findByMaNhanVien(maNhanVien).get();
+        if (tk == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
+        }
+
+        GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
+        dto.setTenDangNhap(tk.getTenDangNhap());
+        dto.setTrangThai(tk.getTrangThai());
+        dto.setVaiTro(tk.getVaiTro());
+
+        dto.setHoTen(nv.getHoTen());
+        dto.setDiaChi(nv.getDiaChi());
+        dto.setEmail(nv.getEmail());
+        dto.setPhone(nv.getPhone());
+        dto.setGioiTinh(nv.getGioiTinh());
+        dto.setSoTuoi(nv.getSoTuoi());
+
+        return ResponseEntity.ok(dto);
+
+    }
+
+    public ResponseEntity<?> getAllKH(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TaiKhoan> pageResult = taiKhoanRepo.findByVaiTroEquals("KhachHang", pageable);
+
+        Page<GetTaiKhoanListResponse> responsePage = pageResult.map(tk -> {
+            GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
+            dto.setTenDangNhap(tk.getTenDangNhap());
+            dto.setVaiTro(tk.getVaiTro());
+            dto.setTrangThai(tk.getTrangThai());
+
+            if (tk.getMaNhanVien() != null) {
+                khachHangRepo.findById(tk.getMaKhachHang()).ifPresent(kh -> {
+                    dto.setHoTen(kh.getHoTen());
+                    dto.setDiaChi(kh.getDiaChi());
+                    dto.setEmail(kh.getEmail());
+                    dto.setPhone(kh.getPhone());
+                    dto.setGioiTinh(kh.getGioiTinh());
+                    dto.setSoTuoi(kh.getSoTuoi());
+                });
+            }
+
+            return dto;
+        });
+
+        return ResponseEntity.ok(responsePage);
+    }
+
+    public ResponseEntity<?> getOneKH(Integer maKhachHang) {
+        Optional<KhachHang> khOpt = khachHangRepo.findById(maKhachHang);
+        if (khOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Customer not found"));
+        }
+
+        KhachHang kh = khOpt.get();
+
+        TaiKhoan tk = taiKhoanRepo.findByMaKhachHang(maKhachHang).get();
+        if (tk == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
+        }
+
+        GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
+        dto.setTenDangNhap(tk.getTenDangNhap());
+        dto.setTrangThai(tk.getTrangThai());
+        dto.setVaiTro(tk.getVaiTro());
+
+        dto.setHoTen(kh.getHoTen());
+        dto.setDiaChi(kh.getDiaChi());
+        dto.setEmail(kh.getEmail());
+        dto.setPhone(kh.getPhone());
+        dto.setGioiTinh(kh.getGioiTinh());
+        dto.setSoTuoi(kh.getSoTuoi());
+
+        return ResponseEntity.ok(dto);
+
     }
 }
