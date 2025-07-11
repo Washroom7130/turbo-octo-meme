@@ -88,6 +88,8 @@ public class AuthController {
         return authService.resetPassword(token, request);
     }
 
+    // TODO: add GET /api/auth/reset_password for checking token validity
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         // Delete the cookie by setting maxAge to 0
