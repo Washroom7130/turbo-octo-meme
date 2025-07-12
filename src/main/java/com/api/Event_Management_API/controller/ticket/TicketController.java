@@ -29,13 +29,13 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createTicket(@Valid @RequestBody SendTicketRequest request, BindingResult result) {
+    public ResponseEntity<?> createTicket(@Valid @RequestBody SendTicketRequest request, BindingResult result, HttpServletRequest httpServletRequest) {
         if (result.hasErrors()) {
             String error = result.getFieldErrors().get(0).getDefaultMessage();
             return ResponseEntity.badRequest().body(Map.of("error", error));
         }
 
-        return ticketService.createTicket(request);
+        return ticketService.createTicket(request, httpServletRequest);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")

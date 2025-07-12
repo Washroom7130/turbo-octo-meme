@@ -5,6 +5,7 @@ import com.api.Event_Management_API.dto.Auth.LoginRequest;
 import com.api.Event_Management_API.dto.Auth.RegisterRequest;
 import com.api.Event_Management_API.dto.Auth.ResetPasswordRequest;
 import com.api.Event_Management_API.service.AuthService;
+import com.api.Event_Management_API.util.RateLimiterService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -28,14 +30,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final RateLimiterService rateLimiterService;
 
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, RateLimiterService rateLimiterService) {
         this.authService = authService;
+        this.rateLimiterService = rateLimiterService;
     }
     
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request, BindingResult result) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request, BindingResult result, HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest.getRemoteAddr();
+        String rateLimitKey = "register:" + clientIp;
+
+        if (!rateLimiterService.isAllowed(rateLimitKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests, please try again later"));
+        }
+
         // Validate user input
         if (result.hasErrors()) {
             String errorMessage = result.getFieldErrors().get(0).getDefaultMessage();
@@ -78,6 +89,11 @@ public class AuthController {
         return authService.forgotPassword(request.getIdentifier(), httpRequest);
     }
 
+    @GetMapping("/reset_password/{token}")
+    public ResponseEntity<?> checkResetToken(@PathVariable("token") String token, HttpServletRequest request) {
+        return authService.checkResetToken(token, request);
+    }
+
     @PostMapping("/reset_password/{token}")
     public ResponseEntity<?> resetPassword(@Valid @PathVariable("token") String token, @RequestBody ResetPasswordRequest request, BindingResult result) {
         if (result.hasErrors()) {
@@ -87,8 +103,6 @@ public class AuthController {
 
         return authService.resetPassword(token, request);
     }
-
-    // TODO: add GET /api/auth/reset_password for checking token validity
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {

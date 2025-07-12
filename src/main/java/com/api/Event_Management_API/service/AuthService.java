@@ -254,5 +254,30 @@ public class AuthService {
         tokenRepo.delete(token);
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
-    }   
+    } 
+
+    public ResponseEntity<?> checkResetToken(String token, HttpServletRequest request) {
+        String clientIp = request.getRemoteAddr();
+        String rateLimitKey = "checkResetToken:" + clientIp;
+
+        if (!rateLimiterService.isAllowed(rateLimitKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests, please try again later"));
+        }
+        
+        Optional<Token> tokenOpt = tokenRepo.findById(token);
+        if (tokenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid or expired token"));
+        }
+
+        Token tkn = tokenOpt.get();
+
+        // Check if token has correct type and not expired
+        if (!"ResetPassword".equals(tkn.getLoaiToken()) ||
+        tkn.getThoiDiemHetHan().isBefore(LocalDateTime.now())) 
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid or expired token"));
+        }
+
+        return ResponseEntity.ok(null);
+    }
 }

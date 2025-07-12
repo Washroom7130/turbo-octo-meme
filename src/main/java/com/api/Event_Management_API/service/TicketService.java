@@ -3,6 +3,7 @@ package com.api.Event_Management_API.service;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.catalina.filters.RateLimitFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import com.api.Event_Management_API.repository.NhanVienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.repository.TicketRepository;
 import com.api.Event_Management_API.util.JwtUtil;
+import com.api.Event_Management_API.util.RateLimiterService;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,21 +32,31 @@ public class TicketService {
     private final NhanVienRepository nhanVienRepo;
     private final TaiKhoanRepository taiKhoanRepo;
     private final EmailService emailService;
+    private final RateLimiterService rateLimiterService;
     private final JwtUtil jwtUtil;
 
     public TicketService(TicketRepository ticketRepo,
                         NhanVienRepository nhanVienRepo,
                         TaiKhoanRepository taiKhoanRepo,
                         EmailService emailService,
+                        RateLimiterService rateLimiterService,
                         JwtUtil jwtUtil) {
         this.ticketRepo = ticketRepo;
         this.nhanVienRepo = nhanVienRepo;
         this.taiKhoanRepo = taiKhoanRepo;
         this.emailService = emailService;
+        this.rateLimiterService = rateLimiterService;
         this.jwtUtil = jwtUtil;
     }
 
-    public ResponseEntity<?> createTicket(SendTicketRequest request) {
+    public ResponseEntity<?> createTicket(SendTicketRequest request, HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest.getRemoteAddr();
+        String rateLimitKey = "createTicket:" + clientIp;
+
+        if (!rateLimiterService.isAllowed(rateLimitKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", "Too many requests, please try again later"));
+        }
+
         Ticket ticket = new Ticket();
         ticket.setTenKhachHang(request.getTenKhachHang());
         ticket.setEmail(request.getEmail());
