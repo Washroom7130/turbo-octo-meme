@@ -2,6 +2,8 @@ package com.api.Event_Management_API.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +34,9 @@ import com.api.Event_Management_API.repository.SuKienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
 import com.api.Event_Management_API.util.FileUploadUtil;
 import com.api.Event_Management_API.util.JwtUtil;
+import com.api.Event_Management_API.util.OnlinePaymentUtil;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service
@@ -294,7 +298,7 @@ public class SuKienService {
         dangKy.setMaDangKy(UUID.randomUUID().toString());
         dangKy.setNgayDangKy(LocalDateTime.now());
         dangKy.setViTriGhe(request.getViTriGhe());
-        dangKy.setTrangThaiDangKy("Thành công");
+        dangKy.setTrangThaiDangKy("Đang xử lý");
         dangKy.setMaKhachHang(khachHang.get().getMaKhachHang());
         dangKy.setMaSuKien(maSuKien);
 
@@ -303,15 +307,24 @@ public class SuKienService {
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(UUID.randomUUID().toString());
         hoaDon.setNgayTao(LocalDateTime.now());
-        hoaDon.setTrangThaiHoaDon("Đã thanh toán");
+        hoaDon.setTrangThaiHoaDon("Chưa thanh toán");
         hoaDon.setTongTien(suKien.getPhiThamGia());
-        hoaDon.setThoiGianHieuLuc(LocalDateTime.now()); // change this later
-        hoaDon.setThoiGianThanhCong(LocalDateTime.now()); // change this later
+        hoaDon.setThoiGianHieuLuc(LocalDateTime.now().plusMinutes(10)); // change this later
+        hoaDon.setThoiGianThanhCong(LocalDateTime.now());
         hoaDon.setPhuongThucThanhToan(request.getPhuongThucThanhToan());
         hoaDon.setMaKhachHang(khachHang.get().getMaKhachHang());
         hoaDon.setMaDangKy(dangKy.getMaDangKy());
 
         hoaDonRepo.save(hoaDon);
+
+        // Setting correct timezone
+        long expireLong = hoaDon.getThoiGianHieuLuc().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond();
+        String successUrl = dangKy.getMaDangKy() + "/" + hoaDon.getMaHoaDon() + "/success";
+        String cancelUrl = dangKy.getMaDangKy() + "/" + hoaDon.getMaHoaDon() + "/cancel";
+
+        OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
+
+        String url = paymentUtil.getPaymentURL(suKien.getTenSuKien(), Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
 
         long currentSuccessfulRegistration = dangKyRepo.countByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công");
 
@@ -320,7 +333,66 @@ public class SuKienService {
             suKienRepo.save(suKien);
         }
 
-        return ResponseEntity.ok(Map.of("message", "Successfully sign up"));
+        return ResponseEntity.ok(Map.of("url", url));
 
+    }
+
+    public ResponseEntity<?> paymentSuccess(String maDangKy, String maHoaDon) {
+        Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
+        if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        HoaDon hoaDon = hdOpt.get();
+
+        Optional<DangKy> dkOpt = dangKyRepo.findById(hoaDon.getMaDangKy());
+        if (dkOpt.isEmpty() || !dkOpt.get().getTrangThaiDangKy().equals("Đang xử lý")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        if (taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang()).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Changing hoadon status
+        hoaDon.setThoiGianThanhCong(LocalDateTime.now());
+        hoaDon.setTrangThaiHoaDon("Đã thanh toán");
+        hoaDonRepo.save(hoaDon);
+
+        // Changing dangky status
+        DangKy dangKy = dkOpt.get();
+        dangKy.setTrangThaiDangKy("Thành công");
+        dangKyRepo.save(dangKy);
+
+        return ResponseEntity.ok(Map.of("message", "Payment has been successfully processed"));
+    }
+
+    public ResponseEntity<?> paymentCancel(String maDangKy, String maHoaDon) {
+        Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
+        if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        HoaDon hoaDon = hdOpt.get();
+
+        Optional<DangKy> dkOpt = dangKyRepo.findById(hoaDon.getMaDangKy());
+        if (dkOpt.isEmpty() || !dkOpt.get().getTrangThaiDangKy().equals("Đang xử lý")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        if (taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang()).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Changing hoadon status
+        hoaDon.setTrangThaiHoaDon("Đã hủy");
+        hoaDonRepo.save(hoaDon);
+
+        // Changing dangky status
+        DangKy dangKy = dkOpt.get();
+        dangKy.setTrangThaiDangKy("Đã hủy");
+        dangKyRepo.save(dangKy);
+
+        return ResponseEntity.ok(Map.of("message", "Payment has been successfully cancelled"));
     }
 }

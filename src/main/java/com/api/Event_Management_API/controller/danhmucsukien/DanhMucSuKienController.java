@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.Event_Management_API.dto.DanhMucSuKien.CreateDanhMucRequest;
-import com.api.Event_Management_API.dto.DanhMucSuKien.GetDanhMucResponse;
 import com.api.Event_Management_API.service.DanhMucSuKienService;
 
 import jakarta.validation.Valid;
@@ -59,8 +59,8 @@ public class DanhMucSuKienController {
     }
 
     @GetMapping("/get/all")
-    public ResponseEntity<List<GetDanhMucResponse>> getAll() {
-        return danhMucSuKienService.getAll();
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        return danhMucSuKienService.getAll(page, size);
     }
 
     @GetMapping("/get/{maDanhMuc}")

@@ -70,4 +70,16 @@ public class SuKienController {
     public ResponseEntity<?> getOne(@PathVariable Integer maSuKien) {
         return suKienService.getOne(maSuKien);
     }
+
+    @PreAuthorize("hasAnyAuthority('KhachHang')")
+    @GetMapping("dangky/{maDangKy}/{maHoaDon}/success")
+    public ResponseEntity<?> paymentSuccess(@PathVariable String maDangKy, @PathVariable String maHoaDon) {
+        return suKienService.paymentSuccess(maDangKy, maHoaDon);
+    }
+
+    @PreAuthorize("hasAnyAuthority('KhachHang')")
+    @GetMapping("dangky/{maDangKy}/{maHoaDon}/cancel")
+    public ResponseEntity<?> paymentCancel(@PathVariable String maDangKy, @PathVariable String maHoaDon) {
+        return suKienService.paymentCancel(maDangKy, maHoaDon);
+    }
 }

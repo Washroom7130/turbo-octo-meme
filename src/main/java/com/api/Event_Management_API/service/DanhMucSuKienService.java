@@ -6,6 +6,9 @@ import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -63,11 +66,18 @@ public class DanhMucSuKienService {
         return ResponseEntity.ok(Map.of("message", "Category updated successfully"));
     }
 
-    public ResponseEntity<List<GetDanhMucResponse>> getAll() {
-        List<GetDanhMucResponse> result = danhMucSuKienRepo.findAll().stream()
-                                            .map(dm -> new GetDanhMucResponse(dm.getMaDanhMuc(), dm.getTenDanhMuc()))
-                                            .toList();
-        return ResponseEntity.ok(result);
+    public ResponseEntity<?> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DanhMucSuKien> pageResult = danhMucSuKienRepo.findAll(pageable);
+
+        Page<GetDanhMucResponse> responsePage = pageResult.map(dm -> {
+            return new GetDanhMucResponse(
+                dm.getMaDanhMuc(),
+                dm.getTenDanhMuc()
+            );
+        });
+
+        return ResponseEntity.ok(responsePage);
     }
 
     public ResponseEntity<?> getOne(Integer maDanhMuc) {
