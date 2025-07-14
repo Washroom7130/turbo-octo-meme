@@ -1,5 +1,7 @@
 package com.api.Event_Management_API.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,5 +14,6 @@ public interface DangKyRepository extends JpaRepository<DangKy, String> {
     boolean existsByMaSuKienAndViTriGhe (Integer maSuKien, String viTriGhe);
     Page<DangKy> findAllByMaKhachHang(Integer maKhachHang, Pageable pageable);
     boolean existsByMaKhachHangAndMaSuKienAndTrangThaiDangKy(Integer maKhachHang, Integer maSuKien, String trangThaiDangKy);
-
+    List<DangKy> findByMaSuKienAndTrangThaiDangKyIn(Integer maSuKien, List<String> status);
+    Page<DangKy> findByMaSuKienAndTrangThaiDangKy(Integer maSuKien, String trangThaiDangKy, Pageable pageable);
 }

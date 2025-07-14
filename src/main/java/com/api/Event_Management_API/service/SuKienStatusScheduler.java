@@ -40,8 +40,17 @@ public class SuKienStatusScheduler {
             }
         }
 
+        // Update "Hết hạn đăng ký"
+        List<SuKien> hetHanDangKy = suKienRepo.findByNgayBatDauBeforeAndTrangThaiSuKienNot(now.plusDays(3), "Hết hạn đăng ký");
+        for (SuKien sk : hetHanDangKy) {
+            if ("Còn chỗ".equals(sk.getTrangThaiSuKien()) || "Hết chỗ".equals(sk.getTrangThaiSuKien())) {
+                sk.setTrangThaiSuKien("Hết hạn đăng ký");
+            }
+        }
+
         // Save updated status
         suKienRepo.saveAll(dangDienRa);
         suKienRepo.saveAll(daKetThuc);
+        suKienRepo.saveAll(hetHanDangKy);
     }
 }

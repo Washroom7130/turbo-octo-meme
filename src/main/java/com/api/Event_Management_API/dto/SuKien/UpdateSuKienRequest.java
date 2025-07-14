@@ -13,7 +13,6 @@ public class UpdateSuKienRequest {
     private MultipartFile anhSuKien;
     private String diaDiem;
     private Float phiThamGia;
-    private Integer luongChoNgoi;
     private LocalDateTime ngayBatDau;
     private LocalDateTime ngayKetThuc;
     private Integer maDanhMuc;

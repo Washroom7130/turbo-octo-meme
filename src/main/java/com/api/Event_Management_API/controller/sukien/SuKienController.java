@@ -73,13 +73,13 @@ public class SuKienController {
 
     @PreAuthorize("hasAnyAuthority('KhachHang')")
     @GetMapping("dangky/{maDangKy}/{maHoaDon}/success")
-    public ResponseEntity<?> paymentSuccess(@PathVariable String maDangKy, @PathVariable String maHoaDon) {
-        return suKienService.paymentSuccess(maDangKy, maHoaDon);
+    public ResponseEntity<?> paymentSuccess(@PathVariable String maDangKy, @PathVariable String maHoaDon, HttpServletRequest request) {
+        return suKienService.paymentSuccess(maDangKy, maHoaDon, request);
     }
 
     @PreAuthorize("hasAnyAuthority('KhachHang')")
     @GetMapping("dangky/{maDangKy}/{maHoaDon}/cancel")
-    public ResponseEntity<?> paymentCancel(@PathVariable String maDangKy, @PathVariable String maHoaDon) {
-        return suKienService.paymentCancel(maDangKy, maHoaDon);
+    public ResponseEntity<?> paymentCancel(@PathVariable String maDangKy, @PathVariable String maHoaDon, HttpServletRequest request) {
+        return suKienService.paymentCancel(maDangKy, maHoaDon, request);
     }
 }

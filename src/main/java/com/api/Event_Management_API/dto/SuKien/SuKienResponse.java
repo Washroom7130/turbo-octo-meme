@@ -1,6 +1,7 @@
 package com.api.Event_Management_API.dto.SuKien;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,4 +21,6 @@ public class SuKienResponse {
     private LocalDateTime ngayBatDau;
     private LocalDateTime ngayKetThuc;
     private Integer maDanhMuc;
+    private Float rating;
+    private List<String> occupiedSeat;
 }

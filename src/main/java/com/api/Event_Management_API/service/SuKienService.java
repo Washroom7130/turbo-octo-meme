@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,11 +23,13 @@ import com.api.Event_Management_API.dto.SuKien.DangKySuKienRequest;
 import com.api.Event_Management_API.dto.SuKien.SuKienResponse;
 import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
 import com.api.Event_Management_API.model.DangKy;
+import com.api.Event_Management_API.model.DanhGia;
 import com.api.Event_Management_API.model.HoaDon;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.DangKyRepository;
+import com.api.Event_Management_API.repository.DanhGiaRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
 import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
@@ -48,6 +51,7 @@ public class SuKienService {
     private final KhachHangRepository khachHangRepo;
     private final DangKyRepository dangKyRepo;
     private final HoaDonRepository hoaDonRepo;
+    private final DanhGiaRepository danhGiaRepo;
     private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
@@ -56,6 +60,7 @@ public class SuKienService {
                         KhachHangRepository khachHangRepo,
                         DangKyRepository dangKyRepo,
                         HoaDonRepository hoadDonRepo,
+                        DanhGiaRepository danhGiaRepo,
                         JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
@@ -63,6 +68,7 @@ public class SuKienService {
         this.khachHangRepo = khachHangRepo;
         this.dangKyRepo = dangKyRepo;
         this.hoaDonRepo = hoadDonRepo;
+        this.danhGiaRepo = danhGiaRepo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -70,7 +76,6 @@ public class SuKienService {
         if (request.getTenSuKien() != null) suKien.setTenSuKien(request.getTenSuKien());
         if (request.getMoTa() != null) suKien.setMoTa(request.getMoTa());
         if (request.getDiaDiem() != null) suKien.setDiaDiem(request.getDiaDiem());
-        if (request.getLuongChoNgoi() != null) suKien.setLuongChoNgoi(request.getLuongChoNgoi());
         if (request.getPhiThamGia() != null) suKien.setPhiThamGia(request.getPhiThamGia());
         if (request.getNgayBatDau() != null) suKien.setNgayBatDau(request.getNgayBatDau());
         if (request.getNgayKetThuc() != null) suKien.setNgayKetThuc(request.getNgayKetThuc());
@@ -133,6 +138,11 @@ public class SuKienService {
 
             SuKien suKien = suKienOptional.get();
 
+            // Prevent updating event that has closed registration and after
+            if (!suKien.getTrangThaiSuKien().equals("Còn chỗ") && !suKien.getTrangThaiSuKien().equals("Hết chỗ")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Can only update event before registration date"));
+            }
+
             // Validate image if provided
             if (request.getAnhSuKien() != null && !request.getAnhSuKien().isEmpty()) {
                 String imagePath = FileUploadUtil.saveImageFile(request.getAnhSuKien());
@@ -187,18 +197,41 @@ public class SuKienService {
             suKienPage = suKienRepo.findAll(pageable);
         }
 
-        Page<SuKienResponse> responsePage = suKienPage.map(sk -> new SuKienResponse(
-            sk.getMaSuKien(),
-            sk.getTenSuKien(),
-            sk.getMoTa(),
-            sk.getAnhSuKien(),
-            sk.getDiaDiem(),
-            sk.getPhiThamGia(),
-            sk.getLuongChoNgoi(),
-            sk.getNgayBatDau(),
-            sk.getNgayKetThuc(),
-            sk.getMaDanhMuc()
-        ));
+        Page<SuKienResponse> responsePage = suKienPage.map(sk -> {
+            List<DanhGia> danhGias = danhGiaRepo.findByMaSuKien(sk.getMaSuKien());
+    
+            float rating = -1;
+            if (!danhGias.isEmpty()) {
+                float total = 0;
+                for (DanhGia dg : danhGias) {
+                    total += dg.getLoaiDanhGia();
+                }
+                rating = Math.round((total / danhGias.size()) * 10f) / 10f; // round to 1 decimal
+            }
+
+            List<DangKy> dangKys = dangKyRepo.findByMaSuKienAndTrangThaiDangKyIn(
+                sk.getMaSuKien(), List.of("Đang xử lý", "Thành công")
+            );
+
+            List<String> occupiedSeat = dangKys.stream()
+                .map(DangKy::getViTriGhe)
+                .collect(Collectors.toList());
+    
+            return new SuKienResponse(
+                sk.getMaSuKien(),
+                sk.getTenSuKien(),
+                sk.getMoTa(),
+                sk.getAnhSuKien(),
+                sk.getDiaDiem(),
+                sk.getPhiThamGia(),
+                sk.getLuongChoNgoi(),
+                sk.getNgayBatDau(),
+                sk.getNgayKetThuc(),
+                sk.getMaDanhMuc(),
+                rating,
+                occupiedSeat
+            );
+        });
 
         return ResponseEntity.ok(responsePage);
     }
@@ -211,6 +244,24 @@ public class SuKienService {
         }
 
         SuKien suKien = suKienOptional.get();
+        List<DanhGia> dgs = danhGiaRepo.findByMaSuKien(maSuKien);
+        float rating = -1;
+        if (!dgs.isEmpty()) {
+            float total = 0;
+            for (DanhGia dg : dgs) {
+                total += dg.getLoaiDanhGia();
+            }
+            rating = Math.round((total / dgs.size()) * 10f) / 10f; // round to 1 decimal
+        }
+
+        List<DangKy> dangKys = dangKyRepo.findByMaSuKienAndTrangThaiDangKyIn(
+            suKien.getMaSuKien(), List.of("Đang xử lý", "Thành công")
+        );
+
+        List<String> occupiedSeat = dangKys.stream()
+            .map(DangKy::getViTriGhe)
+            .collect(Collectors.toList());
+
         SuKienResponse suKienResponse = new SuKienResponse(
             suKien.getMaSuKien(),
             suKien.getTenSuKien(),
@@ -221,7 +272,9 @@ public class SuKienService {
             suKien.getLuongChoNgoi(),
             suKien.getNgayBatDau(),
             suKien.getNgayKetThuc(),
-            suKien.getMaDanhMuc()
+            suKien.getMaDanhMuc(),
+            rating,
+            occupiedSeat
         );
 
         return ResponseEntity.ok(suKienResponse);
@@ -261,6 +314,7 @@ public class SuKienService {
         if (!status.equals("Còn chỗ")) {
             String msg = switch (status) {
                 case "Hết chỗ" -> "Event is full";
+                case "Hết hạn đăng ký" -> "Event has stopped receiving registration";
                 case "Đã hủy" -> "Event has been cancelled";
                 case "Đang diễn ra" -> "Event is in progress";
                 case "Đã kết thúc" -> "Event has ended";
@@ -337,7 +391,10 @@ public class SuKienService {
 
     }
 
-    public ResponseEntity<?> paymentSuccess(String maDangKy, String maHoaDon) {
+    public ResponseEntity<?> paymentSuccess(String maDangKy, String maHoaDon, HttpServletRequest request) {
+        Claims claims = jwtUtil.extractClaimsFromRequest(request);
+        String maTaiKhoan = claims.get("maTaiKhoan", String.class);
+
         Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
         if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -350,7 +407,9 @@ public class SuKienService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        if (taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang()).isEmpty()) {
+        // check if taikhoan exists and if maTaiKhoan from token matching the one from taiKhoan entity
+        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang());
+        if (tkOpt.isEmpty() || !tkOpt.get().getMaTaiKhoan().equals(maTaiKhoan)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
@@ -367,7 +426,10 @@ public class SuKienService {
         return ResponseEntity.ok(Map.of("message", "Payment has been successfully processed"));
     }
 
-    public ResponseEntity<?> paymentCancel(String maDangKy, String maHoaDon) {
+    public ResponseEntity<?> paymentCancel(String maDangKy, String maHoaDon, HttpServletRequest request) {
+        Claims claims = jwtUtil.extractClaimsFromRequest(request);
+        String maTaiKhoan = claims.get("maTaiKhoan", String.class);
+
         Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
         if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -380,7 +442,9 @@ public class SuKienService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        if (taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang()).isEmpty()) {
+        // check if taikhoan exists and if maTaiKhoan from token matching the one from taiKhoan entity
+        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang());
+        if (tkOpt.isEmpty() || !tkOpt.get().getMaTaiKhoan().equals(maTaiKhoan)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 

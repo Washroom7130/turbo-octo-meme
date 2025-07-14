@@ -14,6 +14,8 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
 
     List<SuKien> findByNgayKetThucBefore(LocalDateTime end);
 
+    List<SuKien> findByNgayBatDauBeforeAndTrangThaiSuKienNot(LocalDateTime time, String trangThai);
+
     Page<SuKien> findByMaDanhMuc(Integer maDanhMuc, Pageable pageable);
 
     boolean existsByMaDanhMuc(Integer maDanhMuc);
