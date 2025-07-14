@@ -59,8 +59,8 @@ public class DanhMucSuKienController {
     }
 
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return danhMucSuKienService.getAll(page, size);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search) {
+        return danhMucSuKienService.getAll(page, size, search);
     }
 
     @GetMapping("/get/{maDanhMuc}")

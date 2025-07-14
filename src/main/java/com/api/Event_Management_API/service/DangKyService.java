@@ -45,40 +45,46 @@ public class DangKyService {
         this.jwtUtil = jwtUtil;
     }
 
-    public ResponseEntity<?> getAll(int page, int size, HttpServletRequest request) {
+    public ResponseEntity<?> getAll(int page, int size, String search, HttpServletRequest request) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
-
+    
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
         String vaiTro = claims.get("vaiTro", String.class);
-
+    
         Pageable pageable = PageRequest.of(page, size);
         Page<DangKy> pageResult;
-
+    
         if ("KhachHang".equals(vaiTro)) {
             Optional<TaiKhoan> tk = taiKhoanRepo.findById(maTaiKhoan);
-
             if (tk.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
             }
-
-            Optional<KhachHang> kh = khachHangRepo.findById(tk.get().getMaKhachHang());
-
-            pageResult = dangKyRepo.findAllByMaKhachHang(kh.get().getMaKhachHang(), pageable);
+    
+            Integer maKhachHang = tk.get().getMaKhachHang();
+            if (search != null && !search.isBlank()) {
+                pageResult = dangKyRepo.findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCase(
+                    maKhachHang, search, search, pageable
+                );
+            } else {
+                pageResult = dangKyRepo.findAllByMaKhachHang(maKhachHang, pageable);
+            }
+    
         } else if ("NhanVien".equals(vaiTro) || "QuanLy".equals(vaiTro)) {
-            pageResult = dangKyRepo.findAll(pageable);
+            if (search != null && !search.isBlank()) {
+                pageResult = dangKyRepo.findByKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCase(
+                    search, search, pageable
+                );
+            } else {
+                pageResult = dangKyRepo.findAll(pageable);
+            }
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authorized"));
         }
-
+    
         Page<GetAllDangKyStaffResponse> responsePage = pageResult.map(dk -> {
-            String tenKhachHang = khachHangRepo.findById(dk.getMaKhachHang())
-                .map(KhachHang::getHoTen)
-                .orElse("Unknown");
-
-            String tenSuKien = suKienRepo.findById(dk.getMaSuKien())
-                .map(SuKien::getTenSuKien)
-                .orElse("Unknown");
-
+            String tenKhachHang = dk.getKhachHang() != null ? dk.getKhachHang().getHoTen() : "Unknown";
+            String tenSuKien = dk.getSuKien() != null ? dk.getSuKien().getTenSuKien() : "Unknown";
+    
             return new GetAllDangKyStaffResponse(
                 dk.getMaDangKy(),
                 dk.getNgayDangKy(),
@@ -87,11 +93,10 @@ public class DangKyService {
                 tenKhachHang,
                 tenSuKien
             );
-
         });
-
+    
         return ResponseEntity.ok(responsePage);
-    }
+    }    
 
     public ResponseEntity<?> getOne(String maDangKy, HttpServletRequest request) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);

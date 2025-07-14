@@ -66,9 +66,15 @@ public class DanhMucSuKienService {
         return ResponseEntity.ok(Map.of("message", "Category updated successfully"));
     }
 
-    public ResponseEntity<?> getAll(int page, int size) {
+    public ResponseEntity<?> getAll(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<DanhMucSuKien> pageResult = danhMucSuKienRepo.findAll(pageable);
+        Page<DanhMucSuKien> pageResult;
+
+        if (search != null && !search.trim().isEmpty()) {
+            pageResult = danhMucSuKienRepo.findByTenDanhMucContainingIgnoreCase(search.trim(), pageable);
+        } else {
+            pageResult = danhMucSuKienRepo.findAll(pageable);
+        }
 
         Page<GetDanhMucResponse> responsePage = pageResult.map(dm -> {
             return new GetDanhMucResponse(

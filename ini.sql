@@ -197,7 +197,7 @@ VALUES (
     '66a580dc-3400-479d-a0cd-3e0fedcdf8db',
     'admin',
     '$2a$10$fd8mAqdcMoQPn/4R7sxeJugSmslPKWjLh4ahB/Wqxeosi.CgK38Py',
-    'Hoạt động',
+    'Hoạt Động',
     'QuanLy',
     TRUE,
     LAST_INSERT_ID()
