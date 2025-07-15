@@ -1,5 +1,6 @@
 package com.api.Event_Management_API.service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -10,84 +11,116 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.api.Event_Management_API.dto.DiemDanh.GetVisitorResponse;
+import com.api.Event_Management_API.dto.DiemDanh.GetDiemDanhResponse;
 import com.api.Event_Management_API.model.DangKy;
-import com.api.Event_Management_API.model.KhachHang;
+import com.api.Event_Management_API.model.DiemDanh;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.repository.DangKyRepository;
-import com.api.Event_Management_API.repository.KhachHangRepository;
-import com.api.Event_Management_API.repository.SuKienRepository;
+import com.api.Event_Management_API.repository.DiemDanhRepository;
 
 @Service
 public class DiemDanhService {
     
     private final DangKyRepository dangKyRepo;
-    private final SuKienRepository suKienRepo;
-    private final KhachHangRepository khachHangRepo;
+    private final DiemDanhRepository diemDanhRepo;
 
     public DiemDanhService(DangKyRepository dangKyRepo,
-                        SuKienRepository suKienRepo,
-                        KhachHangRepository khachHangRepo) {
+                        DiemDanhRepository diemDanhRepo) {
         this.dangKyRepo = dangKyRepo;
-        this.suKienRepo = suKienRepo;
-        this.khachHangRepo = khachHangRepo;
+        this.diemDanhRepo = diemDanhRepo;
     }
 
-    public ResponseEntity<?> getVisitor(int page, int size, Integer maSuKien) {
+    public ResponseEntity<?> getAllByMaSuKien(Integer maSuKien, int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<DangKy> pageResult = dangKyRepo.findByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công", pageable);
-
-        Optional<SuKien> skOpt = suKienRepo.findById(maSuKien);
-        if (skOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        Page<DiemDanh> diemDanhPage;
+        if (search != null && !search.trim().isEmpty()) {
+            diemDanhPage = diemDanhRepo.findByDangKy_SuKien_MaSuKienAndDangKy_KhachHang_HoTenContainingIgnoreCase(
+                maSuKien, search.trim(), pageable);
+        } else {
+            diemDanhPage = diemDanhRepo.findByDangKy_SuKien_MaSuKien(maSuKien, pageable);
         }
 
-        SuKien suKien = skOpt.get();
-        if (!suKien.getTrangThaiSuKien().equals("Đang diễn ra")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Event has not started"));
-        }
+        Page<GetDiemDanhResponse> responsePage = diemDanhPage.map(dd -> {
+            DangKy dk = dd.getDangKy();
+            String tenKhachHang = (dk != null && dk.getKhachHang() != null)
+                ? dk.getKhachHang().getHoTen()
+                : "Unknown";
 
-        Page<GetVisitorResponse> responsePage = pageResult.map(dk -> {
-            String hoTen = khachHangRepo.findById(dk.getMaKhachHang())
-                            .map(KhachHang::getHoTen)
-                            .orElse("Unknown");
-
-            return new GetVisitorResponse(
-                dk.getMaDangKy(),
-                hoTen,
-                dk.getViTriGhe()
+            return new GetDiemDanhResponse(
+                dd.getMaDiemDanh(),
+                dd.getNgayTaoVe(),
+                dd.getNgayDiemDanh(),
+                dd.getTrangThaiDiemDanh(),
+                dd.getViTriGheNgoi(),
+                tenKhachHang
             );
         });
 
         return ResponseEntity.ok(responsePage);
     }
 
-    public ResponseEntity<?> diemDanh(String maDangKy) {
-        Optional<DangKy> dkOpt = dangKyRepo.findById(maDangKy);
+    public ResponseEntity<?> getByMaDiemDanh(String maDiemDanh) {
+        Optional<DiemDanh> diemDanhOpt = diemDanhRepo.findById(maDiemDanh);
+        if (diemDanhOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Check-in record not found"));
+        }
+    
+        DiemDanh dd = diemDanhOpt.get();
+    
+        DangKy dk = dd.getDangKy();
+        String tenKhachHang = (dk != null && dk.getKhachHang() != null)
+            ? dk.getKhachHang().getHoTen()
+            : "Unknown";
+    
+        GetDiemDanhResponse response = new GetDiemDanhResponse(
+            dd.getMaDiemDanh(),
+            dd.getNgayTaoVe(),
+            dd.getNgayDiemDanh(),
+            dd.getTrangThaiDiemDanh(),
+            dd.getViTriGheNgoi(),
+            tenKhachHang
+        );
+    
+        return ResponseEntity.ok(response);
+    }
 
-        if (maDangKy.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Entry not found"));
+    public ResponseEntity<?> diemDanh(String maDiemDanh) {
+        // 1. Check if maDiemDanh exists
+        Optional<DiemDanh> diemDanhOpt = diemDanhRepo.findById(maDiemDanh);
+        if (diemDanhOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Check-in record not found"));
         }
 
-        DangKy dangKy = dkOpt.get();
-        if (!dangKy.getTrangThaiDangKy().equals("Thành công")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid entry"));
+        DiemDanh diemDanh = diemDanhOpt.get();
+
+        // 2. Get maDangKy and find corresponding DangKy
+        DangKy dangKy = diemDanh.getDangKy();
+        if (dangKy == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Registration not found"));
         }
 
-        Optional<SuKien> skOpt = suKienRepo.findById(dangKy.getMaSuKien());
-        if (skOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        // 3. Get SuKien from DangKy
+        SuKien suKien = dangKy.getSuKien();
+        if (suKien == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Event not found"));
         }
 
-        SuKien suKien = skOpt.get();
-        if (!suKien.getTrangThaiSuKien().equals("Đang diễn ra")) {
+        // 4. Check if event is 'Đang diễn ra'
+        if (!"Đang diễn ra".equals(suKien.getTrangThaiSuKien())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Event has not started"));
         }
 
+        // 5. Update both DiemDanh and DangKy
+        diemDanh.setTrangThaiDiemDanh("Có mặt");
+        diemDanh.setNgayDiemDanh(LocalDateTime.now());
+
         dangKy.setTrangThaiDangKy("Đã điểm danh");
+
+        // Save changes
+        diemDanhRepo.save(diemDanh);
         dangKyRepo.save(dangKy);
 
-        return ResponseEntity.ok(Map.of("message", "Success"));
+        return ResponseEntity.ok(Map.of("message", "Check-in successful"));
     }
 
 }

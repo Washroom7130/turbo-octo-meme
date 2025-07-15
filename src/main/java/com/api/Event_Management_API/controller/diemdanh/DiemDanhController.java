@@ -20,16 +20,24 @@ public class DiemDanhController {
     private DiemDanhService diemDanhService;
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
-    @GetMapping("/get_visitors/{maSuKien}")
-    public ResponseEntity<?> getVisitor(@RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "10") int size,
-                                        @PathVariable Integer maSuKien) {
-        return diemDanhService.getVisitor(page, size, maSuKien);
+    @GetMapping("/get/all/{maSuKien}")
+    public ResponseEntity<?> getAllByEvent(
+        @PathVariable Integer maSuKien,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String search
+    ) {
+        return diemDanhService.getAllByMaSuKien(maSuKien, page, size, search);
+    }
+
+    @GetMapping("/get/{maDiemDanh}")
+    public ResponseEntity<?> getById(@PathVariable String maDiemDanh) {
+        return diemDanhService.getByMaDiemDanh(maDiemDanh);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
-    @PostMapping("/{maDangKy}")
-    public ResponseEntity<?> diemDanh(@PathVariable String maDangKy) {
-        return diemDanhService.diemDanh(maDangKy);
+    @PostMapping("/{maDiemDanh}")
+    public ResponseEntity<?> diemDanh(@PathVariable String maDiemDanh) {
+        return diemDanhService.diemDanh(maDiemDanh);
     }
 }

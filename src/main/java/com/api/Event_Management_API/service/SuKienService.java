@@ -24,6 +24,7 @@ import com.api.Event_Management_API.dto.SuKien.SuKienResponse;
 import com.api.Event_Management_API.dto.SuKien.UpdateSuKienRequest;
 import com.api.Event_Management_API.model.DangKy;
 import com.api.Event_Management_API.model.DanhGia;
+import com.api.Event_Management_API.model.DiemDanh;
 import com.api.Event_Management_API.model.HoaDon;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
@@ -31,6 +32,7 @@ import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhGiaRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
+import com.api.Event_Management_API.repository.DiemDanhRepository;
 import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.SuKienRepository;
@@ -52,6 +54,7 @@ public class SuKienService {
     private final DangKyRepository dangKyRepo;
     private final HoaDonRepository hoaDonRepo;
     private final DanhGiaRepository danhGiaRepo;
+    private final DiemDanhRepository diemDanhRepo;
     private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
@@ -61,6 +64,7 @@ public class SuKienService {
                         DangKyRepository dangKyRepo,
                         HoaDonRepository hoadDonRepo,
                         DanhGiaRepository danhGiaRepo,
+                        DiemDanhRepository diemDanhRepo,
                         JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
@@ -69,6 +73,7 @@ public class SuKienService {
         this.dangKyRepo = dangKyRepo;
         this.hoaDonRepo = hoadDonRepo;
         this.danhGiaRepo = danhGiaRepo;
+        this.diemDanhRepo = diemDanhRepo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -422,6 +427,15 @@ public class SuKienService {
         DangKy dangKy = dkOpt.get();
         dangKy.setTrangThaiDangKy("Thành công");
         dangKyRepo.save(dangKy);
+
+        // Add Diemdanh entity
+        DiemDanh diemDanh = new DiemDanh();
+        diemDanh.setMaDiemDanh(UUID.randomUUID().toString());
+        diemDanh.setNgayTaoVe(LocalDateTime.now());
+        diemDanh.setTrangThaiDiemDanh("Vắng mặt");
+        diemDanh.setViTriGheNgoi(dangKy.getViTriGhe());
+        diemDanh.setMaDangKy(maDangKy);
+        diemDanhRepo.save(diemDanh);
 
         return ResponseEntity.ok(Map.of("message", "Payment has been successfully processed"));
     }
