@@ -12,4 +12,5 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
     boolean existsByMaKhachHangAndMaSuKien(Integer maKhachHang, Integer maSuKien);
     Page<DanhGia> findByMaSuKien(Integer maSuKien, Pageable pageable);
     List<DanhGia> findByMaSuKien(Integer maSuKien);
+    Page<DanhGia> findByKhachHang_HoTenContainingIgnoreCase(String hoTen, Pageable pageable);
 }

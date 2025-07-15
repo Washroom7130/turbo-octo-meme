@@ -45,8 +45,8 @@ public class AdminController {
 
     @PreAuthorize("hasAnyAuthority('QuanLy')")
     @GetMapping("/nhanvien/get/all")
-    public ResponseEntity<?> getAllNhanVien(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return adminService.getAllNV(page, size);
+    public ResponseEntity<?> getAllNhanVien(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search) {
+        return adminService.getAllNV(page, size, search);
     }
 
     @PreAuthorize("hasAnyAuthority('QuanLy')")
@@ -57,8 +57,8 @@ public class AdminController {
 
     @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")
     @GetMapping("/khachhang/get/all")
-    public ResponseEntity<?> getAllKhachHang(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return adminService.getAllKH(page, size);
+    public ResponseEntity<?> getAllKhachHang(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search) {
+        return adminService.getAllKH(page, size, search);
     }
 
     @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")

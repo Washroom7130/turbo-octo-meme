@@ -22,8 +22,8 @@ public class HoaDonController {
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
-        return hoaDonService.getAll(page, size, request);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search, HttpServletRequest request) {
+        return hoaDonService.getAll(page, size, request, search);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")

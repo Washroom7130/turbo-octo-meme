@@ -188,18 +188,24 @@ public class SuKienService {
         }
     }
 
-    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc) {
+    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search) {
         Pageable pageable = PageRequest.of(page, size);
-
         Page<SuKien> suKienPage;
 
+        boolean hasSearch = search != null && !search.isBlank();
+    
         if (maDanhMuc != null) {
             if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
             }
-            suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
+    
+            suKienPage = hasSearch
+                ? suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable)
+                : suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
         } else {
-            suKienPage = suKienRepo.findAll(pageable);
+            suKienPage = hasSearch
+                ? suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable)
+                : suKienRepo.findAll(pageable);
         }
 
         Page<SuKienResponse> responsePage = suKienPage.map(sk -> {

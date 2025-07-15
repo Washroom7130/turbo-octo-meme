@@ -50,7 +50,7 @@ public class HoaDonService {
         this.jwtUtil = jwtUtil;
     }
     
-    public ResponseEntity<?> getAll(int page, int size, HttpServletRequest request) {
+    public ResponseEntity<?> getAll(int page, int size, HttpServletRequest request, String search) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
         String vaiTro = claims.get("vaiTro", String.class);
@@ -66,9 +66,19 @@ public class HoaDonService {
             }
 
             Optional<KhachHang> kh = khachHangRepo.findById(tk.get().getMaKhachHang());
-            pageResult = hoaDonRepo.findAllByMaKhachHang(kh.get().getMaKhachHang(), pageable);
+            if (search != null && !search.isBlank()) {
+                pageResult = hoaDonRepo.findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCase(
+                    kh.get().getMaKhachHang(), search, pageable
+                );
+            } else {
+                pageResult = hoaDonRepo.findAllByMaKhachHang(kh.get().getMaKhachHang(), pageable);
+            }
         } else if ("NhanVien".equals(vaiTro) || "QuanLy".equals(vaiTro)) {
-            pageResult = hoaDonRepo.findAll(pageable);
+            if (search != null && !search.isBlank()) {
+                pageResult = hoaDonRepo.findByKhachHang_HoTenContainingIgnoreCase(search, pageable);
+            } else {
+                pageResult = hoaDonRepo.findAll(pageable);
+            }
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authorized"));
         }

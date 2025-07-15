@@ -114,10 +114,20 @@ public class TicketService {
         return ResponseEntity.ok(Map.of("message", "Ticket response has been sent"));
     }
 
-    public ResponseEntity<?> getAll(int page, int size) {
+    public ResponseEntity<?> getAll(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Ticket> pageResult = ticketRepo.findAll(pageable);
+        Page<Ticket> pageResult;
 
+        boolean hasSearch = search != null && !search.isBlank();
+
+        if (hasSearch) {
+            pageResult = ticketRepo.findByTenKhachHangContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                search, search, pageable
+            );
+        } else {
+            pageResult = ticketRepo.findAll(pageable);
+        }
+        
         Page<GetTicketResponse> pageResponse = pageResult.map(ticket -> {
             String tenNhanVien = "Unknown";
 

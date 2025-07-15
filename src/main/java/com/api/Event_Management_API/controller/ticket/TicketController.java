@@ -51,8 +51,8 @@ public class TicketController {
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return ticketService.getAll(page, size);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search) {
+        return ticketService.getAll(page, size, search);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")

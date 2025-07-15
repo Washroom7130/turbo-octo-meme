@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.DanhGia.GetDanhGiaResponse;
 import com.api.Event_Management_API.dto.DanhGia.ModDanhGiaRequest;
-import com.api.Event_Management_API.dto.DanhMucSuKien.GetDanhMucResponse;
 import com.api.Event_Management_API.model.DanhGia;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
@@ -109,10 +108,16 @@ public class DanhGiaService {
         return ResponseEntity.ok(Map.of("message", "Comment has been deleted successfully"));
     }
 
-    public ResponseEntity<?> getAllDanhGia(int page, int size) {
+    public ResponseEntity<?> getAllDanhGia(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<DanhGia> pageResult = danhGiaRepo.findAll(pageable);
+        Page<DanhGia> pageResult;
 
+        if (search != null && !search.isBlank()) {
+            pageResult = danhGiaRepo.findByKhachHang_HoTenContainingIgnoreCase(search, pageable);
+        } else {
+            pageResult = danhGiaRepo.findAll(pageable);
+        }
+        
         Page<GetDanhGiaResponse> responsePage = pageResult.map(dg -> {
             String tenKhachHang = khachHangRepo.findById(dg.getMaKhachHang())
                 .map(KhachHang::getHoTen)

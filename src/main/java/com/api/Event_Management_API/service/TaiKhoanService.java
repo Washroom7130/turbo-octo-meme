@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.api.Event_Management_API.dto.TaiKhoan.ChangePasswordRequest;
 import com.api.Event_Management_API.dto.TaiKhoan.UpdateTaiKhoanRequest;
-import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.NhanVienRepository;

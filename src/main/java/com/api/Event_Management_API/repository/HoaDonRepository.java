@@ -12,4 +12,6 @@ import com.api.Event_Management_API.model.HoaDon;
 public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
     Page<HoaDon> findAllByMaKhachHang(Integer maKhachHang, Pageable pageable);
     List<HoaDon> findByTrangThaiHoaDonAndThoiGianHieuLucBefore(String status, LocalDateTime now);
+    Page<HoaDon> findByKhachHang_HoTenContainingIgnoreCase(String hoTen, Pageable pageable);
+    Page<HoaDon> findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCase(Integer maKhachHang, String hoTen, Pageable pageable);
 }

@@ -85,9 +85,15 @@ public class AdminService {
         return ResponseEntity.ok(Map.of("message", "Account has been " + (action.equals("activate") ? "activated" : "deactivated")));
     }
 
-    public ResponseEntity<?> getAllNV(int page, int size) {
+    public ResponseEntity<?> getAllNV(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<TaiKhoan> pageResult = taiKhoanRepo.findByVaiTroEquals("NhanVien", pageable);
+        Page<TaiKhoan> pageResult;
+
+        if (search != null && !search.isBlank()) {
+            pageResult = taiKhoanRepo.findByVaiTroEqualsAndNhanVien_HoTenContainingIgnoreCase("NhanVien", search, pageable);
+        } else {
+            pageResult = taiKhoanRepo.findByVaiTroEquals("NhanVien", pageable);
+        }
 
         Page<GetTaiKhoanListResponse> responsePage = pageResult.map(tk -> {
             GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
@@ -141,9 +147,15 @@ public class AdminService {
 
     }
 
-    public ResponseEntity<?> getAllKH(int page, int size) {
+    public ResponseEntity<?> getAllKH(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<TaiKhoan> pageResult = taiKhoanRepo.findByVaiTroEquals("KhachHang", pageable);
+        Page<TaiKhoan> pageResult;
+
+        if (search != null && !search.isBlank()) {
+            pageResult = taiKhoanRepo.findByVaiTroEqualsAndKhachHang_HoTenContainingIgnoreCase("KhachHang", search, pageable);
+        } else {
+            pageResult = taiKhoanRepo.findByVaiTroEquals("KhachHang", pageable);
+        }
 
         Page<GetTaiKhoanListResponse> responsePage = pageResult.map(tk -> {
             GetTaiKhoanListResponse dto = new GetTaiKhoanListResponse();
@@ -151,7 +163,7 @@ public class AdminService {
             dto.setVaiTro(tk.getVaiTro());
             dto.setTrangThai(tk.getTrangThai());
 
-            if (tk.getMaNhanVien() != null) {
+            if (tk.getMaKhachHang() != null) {
                 khachHangRepo.findById(tk.getMaKhachHang()).ifPresent(kh -> {
                     dto.setHoTen(kh.getHoTen());
                     dto.setDiaChi(kh.getDiaChi());

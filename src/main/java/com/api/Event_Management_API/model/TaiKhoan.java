@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -37,4 +39,11 @@ public class TaiKhoan {
     private Integer maNhanVien;
     private Integer maKhachHang;
     
+    @ManyToOne
+    @JoinColumn(name = "maNhanVien", insertable = false, updatable = false)
+    private NhanVien nhanVien;
+
+    @ManyToOne
+    @JoinColumn(name = "maKhachHang", insertable = false, updatable = false)
+    private KhachHang khachHang;
 }

@@ -51,8 +51,8 @@ public class DanhGiaController {
 
     @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return danhGiaService.getAllDanhGia(page, size);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) String search) {
+        return danhGiaService.getAllDanhGia(page, size, search);
     }
 
     @GetMapping("/sukien/{maSuKien}/get/all")

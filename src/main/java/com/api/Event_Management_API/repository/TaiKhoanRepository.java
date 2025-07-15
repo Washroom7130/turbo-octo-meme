@@ -14,4 +14,15 @@ public interface TaiKhoanRepository extends JpaRepository<TaiKhoan, String> {
     Optional<TaiKhoan> findByMaKhachHang(Integer maKhachHang);
     Optional<TaiKhoan> findByMaNhanVien(Integer maNhanVien);
     Page<TaiKhoan> findByVaiTroEquals(String vaiTro, Pageable pageable);
+    Page<TaiKhoan> findByVaiTroEqualsAndMaNhanVienIsNotNull(Pageable pageable, String vaiTro);
+    Page<TaiKhoan> findByVaiTroEqualsAndNhanVien_HoTenContainingIgnoreCase(
+        String vaiTro,
+        String hoTen,
+        Pageable pageable
+    );
+    Page<TaiKhoan> findByVaiTroEqualsAndKhachHang_HoTenContainingIgnoreCase(
+        String vaiTro,
+        String hoTen,
+        Pageable pageable
+    );
 }

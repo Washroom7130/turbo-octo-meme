@@ -19,4 +19,7 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
     Page<SuKien> findByMaDanhMuc(Integer maDanhMuc, Pageable pageable);
 
     boolean existsByMaDanhMuc(Integer maDanhMuc);
+    Page<SuKien> findByTenSuKienContainingIgnoreCase(String tenSuKien, Pageable pageable);
+
+    Page<SuKien> findByMaDanhMucAndTenSuKienContainingIgnoreCase(Integer maDanhMuc, String tenSuKien, Pageable pageable);
 }
