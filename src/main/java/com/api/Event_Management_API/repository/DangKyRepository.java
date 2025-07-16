@@ -22,5 +22,5 @@ public interface DangKyRepository extends JpaRepository<DangKy, String> {
     Page<DangKy> findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCase(
         Integer maKhachHang, String hoTen, String tenSuKien, Pageable pageable
     );
-
+    boolean existsByMaSuKienAndViTriGheAndTrangThaiDangKy(Integer maSuKien, String viTriGhe, String trangThaiDangKy);
 }

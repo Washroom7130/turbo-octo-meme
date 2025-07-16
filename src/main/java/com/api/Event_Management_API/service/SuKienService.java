@@ -3,16 +3,15 @@ package com.api.Event_Management_API.service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +28,7 @@ import com.api.Event_Management_API.model.HoaDon;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
+import com.api.Event_Management_API.model.Token;
 import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhGiaRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
@@ -37,9 +37,11 @@ import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.SuKienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
+import com.api.Event_Management_API.repository.TokenRepository;
 import com.api.Event_Management_API.util.FileUploadUtil;
 import com.api.Event_Management_API.util.JwtUtil;
 import com.api.Event_Management_API.util.OnlinePaymentUtil;
+import com.api.Event_Management_API.util.RandomGeneratorUtil;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +57,7 @@ public class SuKienService {
     private final HoaDonRepository hoaDonRepo;
     private final DanhGiaRepository danhGiaRepo;
     private final DiemDanhRepository diemDanhRepo;
+    private final TokenRepository tokenRepo;
     private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
@@ -65,6 +68,7 @@ public class SuKienService {
                         HoaDonRepository hoadDonRepo,
                         DanhGiaRepository danhGiaRepo,
                         DiemDanhRepository diemDanhRepo,
+                        TokenRepository tokenRepo,
                         JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
@@ -74,6 +78,7 @@ public class SuKienService {
         this.hoaDonRepo = hoadDonRepo;
         this.danhGiaRepo = danhGiaRepo;
         this.diemDanhRepo = diemDanhRepo;
+        this.tokenRepo = tokenRepo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -335,7 +340,8 @@ public class SuKienService {
         }
 
         // Check if seat has taken
-        if (dangKyRepo.existsByMaSuKienAndViTriGhe(maSuKien, request.getViTriGhe())) {
+        if (dangKyRepo.existsByMaSuKienAndViTriGheAndTrangThaiDangKy(
+                maSuKien, request.getViTriGhe(), "Thành công")) {
             return ResponseEntity.badRequest().body(Map.of("error", "Seat has already been taken"));
         }
 
@@ -354,8 +360,10 @@ public class SuKienService {
         Optional<KhachHang> khachHang = khachHangRepo.findById(taiKhoanOptional.get().getMaKhachHang());
 
         // Check if user has already signed up
-        if (dangKyRepo.existsByMaKhachHangAndMaSuKien(khachHang.get().getMaKhachHang(), maSuKien)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "You have already signed up for this event"));
+        if (dangKyRepo.existsByMaKhachHangAndMaSuKienAndTrangThaiDangKy(
+                khachHang.get().getMaKhachHang(), maSuKien, "Thành công")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "You have already signed up for this event"));
         }
 
         // Create DangKy
@@ -382,10 +390,27 @@ public class SuKienService {
 
         hoaDonRepo.save(hoaDon);
 
+        // Create token to prevent paywall-bypass
+        Token token_success = new Token();
+        Token token_cancel = new Token();
+
+        token_success.setMaToken(RandomGeneratorUtil.generateToken(50));
+        token_success.setLoaiToken("PaymentSuccess-" + dangKy.getMaDangKy());
+        token_success.setThoiDiemHetHan(hoaDon.getThoiGianHieuLuc().plusMinutes(5));
+        token_success.setMaTaiKhoan(maTaiKhoan);
+
+        token_cancel.setMaToken(RandomGeneratorUtil.generateToken(50));
+        token_cancel.setLoaiToken("PaymentCancel-" + dangKy.getMaDangKy());
+        token_cancel.setThoiDiemHetHan(hoaDon.getThoiGianHieuLuc().plusMinutes(5));
+        token_cancel.setMaTaiKhoan(maTaiKhoan);
+
+        tokenRepo.save(token_success);
+        tokenRepo.save(token_cancel);
+
         // Setting correct timezone
         long expireLong = hoaDon.getThoiGianHieuLuc().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond();
-        String successUrl = dangKy.getMaDangKy() + "/" + hoaDon.getMaHoaDon() + "/success";
-        String cancelUrl = dangKy.getMaDangKy() + "/" + hoaDon.getMaHoaDon() + "/cancel";
+        String successUrl = token_success.getMaToken() + "/success";
+        String cancelUrl = token_cancel.getMaToken() + "/cancel";
 
         OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
 
@@ -402,39 +427,56 @@ public class SuKienService {
 
     }
 
-    public ResponseEntity<?> paymentSuccess(String maDangKy, String maHoaDon, HttpServletRequest request) {
+    public ResponseEntity<?> paymentSuccess(String token, HttpServletRequest request) {
+        Optional<Token> tokenOpt = tokenRepo.findById(token);
+        if (tokenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invalid or expired token"));
+        }
+    
+        Token foundToken = tokenOpt.get();
+        String loaiToken = foundToken.getLoaiToken();
+    
+        // Must match format PaymentSuccess-{maDangKy}
+        if (!loaiToken.startsWith("PaymentSuccess-")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invalid token format"));
+        }
+    
+        String maDangKy = loaiToken.replace("PaymentSuccess-", "");
+        Optional<DangKy> dkOpt = dangKyRepo.findById(maDangKy);
+        if (dkOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Registration not found"));
+        }
+    
+        // Validate ownership
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
-
-        Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
-        if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        Optional<TaiKhoan> taiKhoanOpt = taiKhoanRepo.findById(maTaiKhoan);
+        if (taiKhoanOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
         }
-
-        HoaDon hoaDon = hdOpt.get();
-
-        Optional<DangKy> dkOpt = dangKyRepo.findById(hoaDon.getMaDangKy());
-        if (dkOpt.isEmpty() || !dkOpt.get().getTrangThaiDangKy().equals("Đang xử lý")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    
+        TaiKhoan taiKhoan = taiKhoanOpt.get();
+        if (!Objects.equals(taiKhoan.getMaKhachHang(), dkOpt.get().getMaKhachHang())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not authorized"));
         }
-
-        // check if taikhoan exists and if maTaiKhoan from token matching the one from taiKhoan entity
-        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang());
-        if (tkOpt.isEmpty() || !tkOpt.get().getMaTaiKhoan().equals(maTaiKhoan)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    
+        // Query and update HoaDon
+        Optional<HoaDon> hoaDonOpt = hoaDonRepo.findByMaDangKy(maDangKy);
+        if (hoaDonOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invoice not found"));
         }
-
-        // Changing hoadon status
+    
+        HoaDon hoaDon = hoaDonOpt.get();
         hoaDon.setThoiGianThanhCong(LocalDateTime.now());
         hoaDon.setTrangThaiHoaDon("Đã thanh toán");
         hoaDonRepo.save(hoaDon);
-
-        // Changing dangky status
+    
+        // Update DangKy
         DangKy dangKy = dkOpt.get();
         dangKy.setTrangThaiDangKy("Thành công");
         dangKyRepo.save(dangKy);
-
-        // Add Diemdanh entity
+    
+        // Create DiemDanh
         DiemDanh diemDanh = new DiemDanh();
         diemDanh.setMaDiemDanh(UUID.randomUUID().toString());
         diemDanh.setNgayTaoVe(LocalDateTime.now());
@@ -442,31 +484,56 @@ public class SuKienService {
         diemDanh.setViTriGheNgoi(dangKy.getViTriGhe());
         diemDanh.setMaDangKy(maDangKy);
         diemDanhRepo.save(diemDanh);
-
-        return ResponseEntity.ok(Map.of("message", "Payment has been successfully processed"));
+    
+        // Delete success + cancel tokens
+        tokenRepo.deleteById(token); // delete current
+        tokenRepo.findByLoaiToken("PaymentCancel-" + maDangKy).ifPresent(cancelToken -> {
+            tokenRepo.delete(cancelToken);
+        });
+    
+        return ResponseEntity.ok(Map.of("message", "Payment confirmed successfully"));
     }
-
-    public ResponseEntity<?> paymentCancel(String maDangKy, String maHoaDon, HttpServletRequest request) {
+    
+    public ResponseEntity<?> paymentCancel(String token, HttpServletRequest request) {
+        Optional<Token> tokenOpt = tokenRepo.findById(token);
+        if (tokenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invalid or expired token"));
+        }
+    
+        Token foundToken = tokenOpt.get();
+        String loaiToken = foundToken.getLoaiToken();
+    
+        // Must match format PaymentSuccess-{maDangKy}
+        if (!loaiToken.startsWith("PaymentCancel-")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invalid token format"));
+        }
+    
+        String maDangKy = loaiToken.replace("PaymentCancel-", "");
+        Optional<DangKy> dkOpt = dangKyRepo.findById(maDangKy);
+        if (dkOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Registration not found"));
+        }
+    
+        // Validate ownership
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
-
-        Optional<HoaDon> hdOpt = hoaDonRepo.findById(maHoaDon);
-        if (hdOpt.isEmpty() || !hdOpt.get().getTrangThaiHoaDon().equals("Chưa thanh toán")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        Optional<TaiKhoan> taiKhoanOpt = taiKhoanRepo.findById(maTaiKhoan);
+        if (taiKhoanOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
         }
-
-        HoaDon hoaDon = hdOpt.get();
-
-        Optional<DangKy> dkOpt = dangKyRepo.findById(hoaDon.getMaDangKy());
-        if (dkOpt.isEmpty() || !dkOpt.get().getTrangThaiDangKy().equals("Đang xử lý")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    
+        TaiKhoan taiKhoan = taiKhoanOpt.get();
+        if (!Objects.equals(taiKhoan.getMaKhachHang(), dkOpt.get().getMaKhachHang())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not authorized"));
         }
-
-        // check if taikhoan exists and if maTaiKhoan from token matching the one from taiKhoan entity
-        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findByMaKhachHang(hoaDon.getMaKhachHang());
-        if (tkOpt.isEmpty() || !tkOpt.get().getMaTaiKhoan().equals(maTaiKhoan)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    
+        // Query and update HoaDon
+        Optional<HoaDon> hoaDonOpt = hoaDonRepo.findByMaDangKy(maDangKy);
+        if (hoaDonOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Invoice not found"));
         }
+    
+        HoaDon hoaDon = hoaDonOpt.get();
 
         // Changing hoadon status
         hoaDon.setTrangThaiHoaDon("Đã hủy");
@@ -476,6 +543,12 @@ public class SuKienService {
         DangKy dangKy = dkOpt.get();
         dangKy.setTrangThaiDangKy("Đã hủy");
         dangKyRepo.save(dangKy);
+
+        // Delete success + cancel tokens
+        tokenRepo.deleteById(token); // delete current
+        tokenRepo.findByLoaiToken("PaymentSuccess-" + maDangKy).ifPresent(successToken -> {
+            tokenRepo.delete(successToken);
+        });
 
         return ResponseEntity.ok(Map.of("message", "Payment has been successfully cancelled"));
     }

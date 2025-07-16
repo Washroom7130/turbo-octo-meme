@@ -165,4 +165,34 @@ public class DanhGiaService {
 
         return ResponseEntity.ok(responsePage);
     }
+
+    public ResponseEntity<?> getOneDanhGia(Integer maDanhGia) {
+        Optional<DanhGia> danhGiaOpt = danhGiaRepo.findById(maDanhGia);
+        
+        if (danhGiaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Review not found"));
+        }
+    
+        DanhGia dg = danhGiaOpt.get();
+    
+        String tenKhachHang = khachHangRepo.findById(dg.getMaKhachHang())
+            .map(KhachHang::getHoTen)
+            .orElse("Unknown");
+    
+        String tenSuKien = suKienRepo.findById(dg.getMaSuKien())
+            .map(SuKien::getTenSuKien)
+            .orElse("Unknown");
+    
+        GetDanhGiaResponse response = new GetDanhGiaResponse(
+            dg.getMaDanhGia(),
+            dg.getLoaiDanhGia(),
+            dg.getBinhLuan(),
+            dg.getNgayDanhGia(),
+            tenKhachHang,
+            tenSuKien
+        );
+    
+        return ResponseEntity.ok(response);
+    }
+    
 }

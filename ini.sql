@@ -165,7 +165,7 @@ CREATE TABLE Ticket (
 -- Table Token
 CREATE TABLE Token (
     maToken VARCHAR(50) PRIMARY KEY NOT NULL,
-    loaiToken VARCHAR(20) NOT NULL,
+    loaiToken VARCHAR(60) NOT NULL,
     thoiDiemHetHan DATETIME,
     maTaiKhoan VARCHAR(50),
     FOREIGN KEY (maTaiKhoan) REFERENCES TaiKhoan(maTaiKhoan)

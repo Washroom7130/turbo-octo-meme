@@ -59,4 +59,10 @@ public class DanhGiaController {
     public ResponseEntity<?> getAllByMaSuKien(@PathVariable Integer maSuKien, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return danhGiaService.getAllBySuKien(maSuKien, page, size);
     }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy', 'NhanVien')")
+    @GetMapping("/get/{maDanhGia}")
+    public ResponseEntity<?> getOne(@PathVariable Integer maDanhGia) {
+        return danhGiaService.getOneDanhGia(maDanhGia);
+    }
 }
