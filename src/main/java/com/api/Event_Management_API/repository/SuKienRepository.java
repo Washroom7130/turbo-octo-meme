@@ -22,4 +22,8 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
     Page<SuKien> findByTenSuKienContainingIgnoreCase(String tenSuKien, Pageable pageable);
 
     Page<SuKien> findByMaDanhMucAndTenSuKienContainingIgnoreCase(Integer maDanhMuc, String tenSuKien, Pageable pageable);
+    Page<SuKien> findByTrangThaiSuKien(String trangThai, Pageable pageable);
+    Page<SuKien> findByMaDanhMucAndTrangThaiSuKien(Integer maDanhMuc, String trangThai, Pageable pageable);
+    Page<SuKien> findByTrangThaiSuKienAndTenSuKienContainingIgnoreCase(String trangThai, String search, Pageable pageable);
+    Page<SuKien> findByMaDanhMucAndTrangThaiSuKienAndTenSuKienContainingIgnoreCase(Integer maDanhMuc, String trangThai, String search, Pageable pageable);
 }

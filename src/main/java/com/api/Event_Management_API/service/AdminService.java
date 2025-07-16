@@ -100,6 +100,7 @@ public class AdminService {
             dto.setTenDangNhap(tk.getTenDangNhap());
             dto.setVaiTro(tk.getVaiTro());
             dto.setTrangThai(tk.getTrangThai());
+            dto.setMaId(tk.getMaNhanVien());
 
             if (tk.getMaNhanVien() != null) {
                 nhanVienRepo.findById(tk.getMaNhanVien()).ifPresent(nv -> {
@@ -162,6 +163,7 @@ public class AdminService {
             dto.setTenDangNhap(tk.getTenDangNhap());
             dto.setVaiTro(tk.getVaiTro());
             dto.setTrangThai(tk.getTrangThai());
+            dto.setMaId(tk.getMaKhachHang());
 
             if (tk.getMaKhachHang() != null) {
                 khachHangRepo.findById(tk.getMaKhachHang()).ifPresent(kh -> {

@@ -145,7 +145,7 @@ public class CauHoiService {
         return ResponseEntity.ok(Map.of("message", "Answer submitted successfully"));
     }
 
-    public ResponseEntity<?> getAllCauHoi(int page, int size, HttpServletRequest request, String search) {
+    public ResponseEntity<?> getAllCauHoi(int page, int size, HttpServletRequest request, String search, Integer maSuKien) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
         String vaiTro = claims.get("vaiTro", String.class);
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
@@ -160,20 +160,41 @@ public class CauHoiService {
             }
 
             Integer maKhachHang = tk.get().getMaKhachHang();
+
             if (search != null && !search.isBlank()) {
-                pageResult = cauHoiRepo.findByMaKhachHangAndSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
-                    maKhachHang.toString(), search, search, pageable
-                );
+                if (maSuKien != null) {
+                    pageResult = cauHoiRepo.findByMaKhachHangAndMaSuKienAndSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+                        maKhachHang.toString(), maSuKien.toString(), search, search, pageable
+                    );
+                } else {
+                    pageResult = cauHoiRepo.findByMaKhachHangAndSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+                        maKhachHang.toString(), search, search, pageable
+                    );
+                }
             } else {
-                pageResult = cauHoiRepo.findByMaKhachHang(maKhachHang.toString(), pageable);
+                if (maSuKien != null) {
+                    pageResult = cauHoiRepo.findByMaKhachHangAndMaSuKien(maKhachHang.toString(), maSuKien.toString(), pageable);
+                } else {
+                    pageResult = cauHoiRepo.findByMaKhachHang(maKhachHang.toString(), pageable);
+                }
             }
         } else if ("NhanVien".equals(vaiTro) || "QuanLy".equals(vaiTro)) {
             if (search != null && !search.isBlank()) {
-                pageResult = cauHoiRepo.findByKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
-                    search, search, search, pageable
-                );
+                if (maSuKien != null) {
+                    pageResult = cauHoiRepo.findByMaSuKienAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+                        maSuKien.toString(), search, search, search, pageable
+                    );
+                } else {
+                    pageResult = cauHoiRepo.findByKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+                        search, search, search, pageable
+                    );
+                }
             } else {
-                pageResult = cauHoiRepo.findAll(pageable);
+                if (maSuKien != null) {
+                    pageResult = cauHoiRepo.findByMaSuKien(maSuKien.toString(), pageable);
+                } else {
+                    pageResult = cauHoiRepo.findAll(pageable);
+                }
             }
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Vai trò không hợp lệ"));

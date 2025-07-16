@@ -193,24 +193,37 @@ public class SuKienService {
         }
     }
 
-    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search) {
+    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search, String trangThai) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SuKien> suKienPage;
-
         boolean hasSearch = search != null && !search.isBlank();
-    
+        boolean hasStatus = trangThai != null && !trangThai.isBlank();
+
         if (maDanhMuc != null) {
             if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
             }
-    
-            suKienPage = hasSearch
-                ? suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable)
-                : suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
+
+            if (hasSearch && hasStatus) {
+                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienAndTenSuKienContainingIgnoreCase(maDanhMuc, trangThai, search, pageable);
+            } else if (hasSearch) {
+                suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable);
+            } else if (hasStatus) {
+                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKien(maDanhMuc, trangThai, pageable);
+            } else {
+                suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
+            }
+
         } else {
-            suKienPage = hasSearch
-                ? suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable)
-                : suKienRepo.findAll(pageable);
+            if (hasSearch && hasStatus) {
+                suKienPage = suKienRepo.findByTrangThaiSuKienAndTenSuKienContainingIgnoreCase(trangThai, search, pageable);
+            } else if (hasSearch) {
+                suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable);
+            } else if (hasStatus) {
+                suKienPage = suKienRepo.findByTrangThaiSuKien(trangThai, pageable);
+            } else {
+                suKienPage = suKienRepo.findAll(pageable);
+            }
         }
 
         Page<SuKienResponse> responsePage = suKienPage.map(sk -> {

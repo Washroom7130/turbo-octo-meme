@@ -18,4 +18,15 @@ public interface CauHoiRepository extends JpaRepository<CauHoi, Integer> {
     Page<CauHoi> findByMaKhachHangAndSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
         String maKhachHang, String tenSuKien, String tenNhanVien, Pageable pageable
     );
+    Page<CauHoi> findByMaKhachHangAndMaSuKien(String maKhachHang, String maSuKien, Pageable pageable);
+
+    Page<CauHoi> findByMaKhachHangAndMaSuKienAndSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+        String maKhachHang, String maSuKien, String search1, String search2, Pageable pageable
+    );
+
+    Page<CauHoi> findByMaSuKien(String maSuKien, Pageable pageable);
+
+    Page<CauHoi> findByMaSuKienAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
+        String maSuKien, String search1, String search2, String search3, Pageable pageable
+    );
 }

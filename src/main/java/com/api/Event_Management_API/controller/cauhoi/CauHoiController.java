@@ -67,9 +67,10 @@ public class CauHoiController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(required = false) String search,
+        @RequestParam(required = false) Integer maSuKien,
         HttpServletRequest request
     ) {
-        return cauHoiService.getAllCauHoi(page, size, request, search);
+        return cauHoiService.getAllCauHoi(page, size, request, search, maSuKien);
     }
 
     @GetMapping("/get/{maCauHoi}")

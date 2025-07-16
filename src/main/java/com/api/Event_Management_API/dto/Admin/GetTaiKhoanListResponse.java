@@ -11,6 +11,7 @@ public class GetTaiKhoanListResponse {
     private String tenDangNhap;
     private String trangThai;
     private String vaiTro;
+    private Integer maId;
 
     private String hoTen;
     private String diaChi;
