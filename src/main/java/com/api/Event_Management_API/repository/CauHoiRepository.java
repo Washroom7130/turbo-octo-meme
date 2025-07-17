@@ -29,4 +29,5 @@ public interface CauHoiRepository extends JpaRepository<CauHoi, Integer> {
     Page<CauHoi> findByMaSuKienAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCaseOrNhanVien_HoTenContainingIgnoreCase(
         String maSuKien, String search1, String search2, String search3, Pageable pageable
     );
+    int countByMaSuKien(String maSuKien);
 }

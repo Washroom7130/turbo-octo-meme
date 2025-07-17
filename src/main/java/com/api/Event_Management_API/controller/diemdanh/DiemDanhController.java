@@ -30,6 +30,7 @@ public class DiemDanhController {
         return diemDanhService.getAllByMaSuKien(maSuKien, page, size, search);
     }
 
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
     @GetMapping("/get/{maDiemDanh}")
     public ResponseEntity<?> getById(@PathVariable String maDiemDanh) {
         return diemDanhService.getByMaDiemDanh(maDiemDanh);

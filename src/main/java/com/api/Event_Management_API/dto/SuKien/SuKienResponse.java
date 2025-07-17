@@ -16,6 +16,7 @@ public class SuKienResponse {
     private String moTa;
     private String anhSuKien;
     private String diaDiem;
+    private String trangThaiSuKien;
     private Float phiThamGia;
     private Integer luongChoNgoi;
     private LocalDateTime ngayBatDau;
@@ -23,4 +24,5 @@ public class SuKienResponse {
     private Integer maDanhMuc;
     private Float rating;
     private List<String> occupiedSeat;
+    private Integer soLuongCauHoi;
 }

@@ -82,4 +82,9 @@ public class SuKienController {
     public ResponseEntity<?> paymentCancel(@PathVariable String token, HttpServletRequest request) {
         return suKienService.paymentCancel(token, request);
     }
+
+    @GetMapping("/get/img/{maAnh}")
+    public ResponseEntity<?> getAnh(@PathVariable String maAnh) {
+        return suKienService.getAnhSuKien(maAnh);
+    }
 }

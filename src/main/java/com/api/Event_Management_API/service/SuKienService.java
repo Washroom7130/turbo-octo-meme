@@ -1,8 +1,13 @@
 package com.api.Event_Management_API.service;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,10 +15,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +36,7 @@ import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.model.Token;
+import com.api.Event_Management_API.repository.CauHoiRepository;
 import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhGiaRepository;
 import com.api.Event_Management_API.repository.DanhMucSuKienRepository;
@@ -58,6 +66,7 @@ public class SuKienService {
     private final DanhGiaRepository danhGiaRepo;
     private final DiemDanhRepository diemDanhRepo;
     private final TokenRepository tokenRepo;
+    private final CauHoiRepository cauHoiRepo;
     private final JwtUtil jwtUtil;
 
     public SuKienService(SuKienRepository suKienRepo,
@@ -69,6 +78,7 @@ public class SuKienService {
                         DanhGiaRepository danhGiaRepo,
                         DiemDanhRepository diemDanhRepo,
                         TokenRepository tokenRepo,
+                        CauHoiRepository cauHoiRepo,
                         JwtUtil jwtUtil) {
         this.suKienRepo = suKienRepo;
         this.danhMucRepo = danhMucRepo;
@@ -79,6 +89,7 @@ public class SuKienService {
         this.danhGiaRepo = danhGiaRepo;
         this.diemDanhRepo = diemDanhRepo;
         this.tokenRepo = tokenRepo;
+        this.cauHoiRepo = cauHoiRepo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -196,36 +207,46 @@ public class SuKienService {
     public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search, String trangThai) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SuKien> suKienPage;
+    
+        // Convert trangThai to list
+        List<String> trangThaiList = null;
+        if (trangThai != null && !trangThai.isBlank()) {
+            trangThaiList = Arrays.stream(trangThai.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
+        }
+    
         boolean hasSearch = search != null && !search.isBlank();
-        boolean hasStatus = trangThai != null && !trangThai.isBlank();
-
+        boolean hasStatusList = trangThaiList != null && !trangThaiList.isEmpty();
+    
         if (maDanhMuc != null) {
             if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
             }
-
-            if (hasSearch && hasStatus) {
-                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienAndTenSuKienContainingIgnoreCase(maDanhMuc, trangThai, search, pageable);
+    
+            if (hasSearch && hasStatusList) {
+                suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(maDanhMuc, search, trangThaiList, pageable);
             } else if (hasSearch) {
                 suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable);
-            } else if (hasStatus) {
-                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKien(maDanhMuc, trangThai, pageable);
+            } else if (hasStatusList) {
+                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienIn(maDanhMuc, trangThaiList, pageable);
             } else {
                 suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
             }
-
+    
         } else {
-            if (hasSearch && hasStatus) {
-                suKienPage = suKienRepo.findByTrangThaiSuKienAndTenSuKienContainingIgnoreCase(trangThai, search, pageable);
+            if (hasSearch && hasStatusList) {
+                suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(search, trangThaiList, pageable);
             } else if (hasSearch) {
                 suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable);
-            } else if (hasStatus) {
-                suKienPage = suKienRepo.findByTrangThaiSuKien(trangThai, pageable);
+            } else if (hasStatusList) {
+                suKienPage = suKienRepo.findByTrangThaiSuKienIn(trangThaiList, pageable);
             } else {
                 suKienPage = suKienRepo.findAll(pageable);
             }
         }
-
+    
         Page<SuKienResponse> responsePage = suKienPage.map(sk -> {
             List<DanhGia> danhGias = danhGiaRepo.findByMaSuKien(sk.getMaSuKien());
     
@@ -235,13 +256,15 @@ public class SuKienService {
                 for (DanhGia dg : danhGias) {
                     total += dg.getLoaiDanhGia();
                 }
-                rating = Math.round((total / danhGias.size()) * 10f) / 10f; // round to 1 decimal
+                rating = Math.round((total / danhGias.size()) * 10f) / 10f;
             }
 
+            int soLuongCauHoi = cauHoiRepo.countByMaSuKien(sk.getMaSuKien().toString());
+    
             List<DangKy> dangKys = dangKyRepo.findByMaSuKienAndTrangThaiDangKyIn(
                 sk.getMaSuKien(), List.of("Đang xử lý", "Thành công")
             );
-
+    
             List<String> occupiedSeat = dangKys.stream()
                 .map(DangKy::getViTriGhe)
                 .collect(Collectors.toList());
@@ -252,18 +275,20 @@ public class SuKienService {
                 sk.getMoTa(),
                 sk.getAnhSuKien(),
                 sk.getDiaDiem(),
+                sk.getTrangThaiSuKien(),
                 sk.getPhiThamGia(),
                 sk.getLuongChoNgoi(),
                 sk.getNgayBatDau(),
                 sk.getNgayKetThuc(),
                 sk.getMaDanhMuc(),
                 rating,
-                occupiedSeat
+                occupiedSeat,
+                soLuongCauHoi
             );
         });
-
+    
         return ResponseEntity.ok(responsePage);
-    }
+    }    
 
     public ResponseEntity<?> getOne(Integer maSuKien) {
         Optional<SuKien> suKienOptional = suKienRepo.findById(maSuKien);
@@ -283,6 +308,8 @@ public class SuKienService {
             rating = Math.round((total / dgs.size()) * 10f) / 10f; // round to 1 decimal
         }
 
+        int soLuongCauHoi = cauHoiRepo.countByMaSuKien(suKien.getMaSuKien().toString());
+
         List<DangKy> dangKys = dangKyRepo.findByMaSuKienAndTrangThaiDangKyIn(
             suKien.getMaSuKien(), List.of("Đang xử lý", "Thành công")
         );
@@ -297,13 +324,15 @@ public class SuKienService {
             suKien.getMoTa(),
             suKien.getAnhSuKien(),
             suKien.getDiaDiem(),
+            suKien.getTrangThaiSuKien(),
             suKien.getPhiThamGia(),
             suKien.getLuongChoNgoi(),
             suKien.getNgayBatDau(),
             suKien.getNgayKetThuc(),
             suKien.getMaDanhMuc(),
             rating,
-            occupiedSeat
+            occupiedSeat,
+            soLuongCauHoi
         );
 
         return ResponseEntity.ok(suKienResponse);
@@ -564,5 +593,24 @@ public class SuKienService {
         });
 
         return ResponseEntity.ok(Map.of("message", "Payment has been successfully cancelled"));
+    }
+
+    public ResponseEntity<?> getAnhSuKien(String maAnh) {
+        try {
+            Path imagePath = Paths.get("upload/img").resolve(maAnh).normalize();
+            UrlResource resource = new UrlResource(imagePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = Files.probeContentType(imagePath);
+                return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                    .body(resource);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }
