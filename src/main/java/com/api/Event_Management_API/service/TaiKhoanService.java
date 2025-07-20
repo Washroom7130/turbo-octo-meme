@@ -61,7 +61,7 @@ public class TaiKhoanService {
 
         TaiKhoan taiKhoan = taiKhoanRepo.findById(maTaiKhoan).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
 
-        safeSet(taiKhoan::setTenDangNhap, request.getTenDangNhap());
+        // safeSet(taiKhoan::setTenDangNhap, request.getTenDangNhap());
         
         switch(vaiTro) {
             case "KhachHang" -> khachHangRepo.findById(taiKhoan.getMaKhachHang())

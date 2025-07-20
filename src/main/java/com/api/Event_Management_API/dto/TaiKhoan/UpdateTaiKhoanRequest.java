@@ -34,8 +34,4 @@ public class UpdateTaiKhoanRequest {
     @Min(value = 18, message = "Minimum age is 18")
     @Max(value = 100, message = "Maximum age is 100")
     private Integer soTuoi;
-
-    @UniqueUsername
-    @Size(max = 50, message = "Username cannot exceed 50 characters")
-    private String tenDangNhap;
 }
