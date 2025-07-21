@@ -26,4 +26,7 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
     Page<SuKien> findByTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(String tenSuKien, List<String> trangThaiList, Pageable pageable);
     Page<SuKien> findByMaDanhMucAndTrangThaiSuKienIn(Integer maDanhMuc, List<String> trangThaiList, Pageable pageable);
     Page<SuKien> findByMaDanhMucAndTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(Integer maDanhMuc, String tenSuKien, List<String> trangThaiList, Pageable pageable);
+    long countByNgayTaoSuKienBetween(LocalDateTime start, LocalDateTime end);
+    long countByNgayTaoSuKienBetweenAndTrangThaiSuKien(LocalDateTime start, LocalDateTime end, String status);
+    long countByNgayTaoSuKienBetweenAndTrangThaiSuKienIn(LocalDateTime start, LocalDateTime end, List<String> statuses);
 }

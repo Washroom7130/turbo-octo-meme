@@ -1,8 +1,10 @@
 package com.api.Event_Management_API.controller.admin;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
@@ -65,5 +67,14 @@ public class AdminController {
     @GetMapping("/khachhang/get/{maKhachHang}")
     public ResponseEntity<?> getOneKhachHang(@PathVariable Integer maKhachHang) {
         return adminService.getOneKH(maKhachHang);
+    }
+
+    @PreAuthorize("hasAnyAuthority('QuanLy')")
+    @GetMapping("/statistics")
+    public ResponseEntity<?> statistics(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+    ) {
+        return adminService.statistics(startDate, endDate);
     }
 }

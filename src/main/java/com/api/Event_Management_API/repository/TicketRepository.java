@@ -12,5 +12,5 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
         String email,
         Pageable pageable
     );
-
+    long countByTrangThai(String trangThai);
 }

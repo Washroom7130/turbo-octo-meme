@@ -1,9 +1,15 @@
 package com.api.Event_Management_API.service;
 
 import java.time.LocalDateTime;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,24 +24,40 @@ import com.api.Event_Management_API.dto.Admin.GetTaiKhoanListResponse;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.NhanVien;
 import com.api.Event_Management_API.model.TaiKhoan;
+import com.api.Event_Management_API.repository.DanhGiaRepository;
+import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.NhanVienRepository;
+import com.api.Event_Management_API.repository.SuKienRepository;
 import com.api.Event_Management_API.repository.TaiKhoanRepository;
+import com.api.Event_Management_API.repository.TicketRepository;
 
 @Service
 public class AdminService {
     private final TaiKhoanRepository taiKhoanRepo;
     private final NhanVienRepository nhanVienRepo;
     private final KhachHangRepository khachHangRepo;
+    private final HoaDonRepository hoaDonRepo;
+    private final SuKienRepository suKienRepo;
+    private final TicketRepository ticketRepo;
+    private final DanhGiaRepository danhGiaRepo;
     private final PasswordEncoder passwordEncoder;
 
     public AdminService(TaiKhoanRepository taiKhoanRepo,
                         NhanVienRepository nhanVienRepo,
                         KhachHangRepository khachHangRepo,
+                        HoaDonRepository hoaDonRepo,
+                        SuKienRepository suKienRepo,
+                        TicketRepository ticketRepo,
+                        DanhGiaRepository danhGiaRepo,
                         PasswordEncoder passwordEncoder) {
         this.taiKhoanRepo = taiKhoanRepo;
         this.nhanVienRepo = nhanVienRepo;
         this.khachHangRepo = khachHangRepo;
+        this.hoaDonRepo = hoaDonRepo;
+        this.ticketRepo = ticketRepo;
+        this.suKienRepo = suKienRepo;
+        this.danhGiaRepo = danhGiaRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -209,5 +231,78 @@ public class AdminService {
 
         return ResponseEntity.ok(dto);
 
+    }
+
+    public ResponseEntity<?> statistics(LocalDateTime startDate, LocalDateTime endDate) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime defaultEnd = now;
+        LocalDateTime defaultStart = now.minusMonths(12);
+
+        // Sanitize inputs
+        if (startDate == null || endDate == null || startDate.isAfter(endDate) || startDate.isAfter(now) || endDate.isAfter(now)) {
+            startDate = defaultStart;
+            endDate = defaultEnd;
+        }
+
+        // Basic data
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalSuKien", suKienRepo.countByNgayTaoSuKienBetween(startDate, endDate));
+        stats.put("suKienDangDienRa", suKienRepo.countByNgayTaoSuKienBetweenAndTrangThaiSuKien(startDate, endDate, "Đang diễn ra"));
+        stats.put("suKienSapDienRa", suKienRepo.countByNgayTaoSuKienBetweenAndTrangThaiSuKienIn(startDate, endDate, List.of("Còn chỗ", "Hết chỗ", "Hết hạn đăng ký")));
+        stats.put("totalKhachHang", khachHangRepo.count());
+        stats.put("totalNhanVien", nhanVienRepo.count());
+        stats.put("totalUnAnsweredTicket", ticketRepo.countByTrangThai("Chưa xử lý"));
+        stats.put("totalRevenue", hoaDonRepo.sumTongTienByTrangThaiHoaDonAndThoiGianThanhCongBetween("Đã thanh toán", startDate, endDate));
+
+        // Rating stuff
+        // Rating part will go here
+        long totalRatings = danhGiaRepo.countByNgayDanhGiaBetween(startDate, endDate);
+        Integer sumRatings = danhGiaRepo.sumLoaiDanhGiaByNgayDanhGiaBetween(startDate, endDate);
+        double avgRating = (totalRatings > 0 && sumRatings != null) ? (double) sumRatings / totalRatings : 0.0;
+
+        stats.put("totalRatings", totalRatings);
+        stats.put("avgRating", avgRating);
+
+        // Average rating per event
+        List<Object[]> averageRatingsPerEvent = danhGiaRepo.findAverageRatingPerEvent(startDate, endDate);
+
+        int goodCount = 0;
+        int badCount = 0;
+        List<Map.Entry<String, Double>> ratingList = new ArrayList<>();
+
+        for (Object[] obj : averageRatingsPerEvent) {
+            String tenSuKien = (String) obj[0];
+            Double avg = (Double) obj[1];
+            if (avg != null) {
+                if (avg >= 3.0) goodCount++;
+                else badCount++;
+                ratingList.add(new AbstractMap.SimpleEntry<>(tenSuKien, avg));
+            }
+        }
+
+        int totalRatedEvents = goodCount + badCount;
+        double goodPercent = totalRatedEvents > 0 ? (goodCount * 100.0) / totalRatedEvents : 0.0;
+        double badPercent = totalRatedEvents > 0 ? (badCount * 100.0) / totalRatedEvents : 0.0;
+
+        stats.put("suKienGoodRating", String.format("%.0f%%", goodPercent));
+        stats.put("suKienBadRating", String.format("%.0f%%", badPercent));
+
+        // Sort and get top 3
+        List<Map<String, Double>> topThreeGood = ratingList.stream()
+            .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+            .limit(3)
+            .map(e -> Map.of(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+
+        List<Map<String, Double>> topThreeBad = ratingList.stream()
+            .sorted(Comparator.comparingDouble(Map.Entry::getValue))
+            .limit(3)
+            .map(e -> Map.of(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+
+        stats.put("topThreeGood", topThreeGood);
+        stats.put("topThreeBad", topThreeBad);
+
+        return ResponseEntity.ok(stats);
     }
 }
