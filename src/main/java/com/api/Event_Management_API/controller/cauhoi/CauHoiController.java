@@ -79,4 +79,10 @@ public class CauHoiController {
         return cauHoiService.getById(maCauHoi, request);
     }
 
+    @GetMapping("/get/sukien/{maSuKien}")
+    @PreAuthorize("hasAnyAuthority( 'KhachHang')")
+    public ResponseEntity<?> getBySuKien(@PathVariable Integer maSuKien, HttpServletRequest request) {
+        return cauHoiService.getBySuKien(maSuKien, request);
+    }
+
 }

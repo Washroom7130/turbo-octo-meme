@@ -101,7 +101,8 @@ public class HoaDonService {
                 hd.getThoiGianThanhCong(),
                 hd.getPhuongThucThanhToan(),
                 tenKhachHang,
-                tenSuKien
+                tenSuKien,
+                dk.get().getMaSuKien()
             );
         });
 
@@ -146,7 +147,8 @@ public class HoaDonService {
             hoaDon.getThoiGianThanhCong(),
             hoaDon.getPhuongThucThanhToan(),
             tenKhachHang,
-            tenSuKien
+            tenSuKien,
+            dk.get().getMaSuKien()
         );
 
         return ResponseEntity.ok(response);

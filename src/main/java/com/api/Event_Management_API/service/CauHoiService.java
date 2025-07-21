@@ -82,7 +82,7 @@ public class CauHoiService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You are not allowed to submit question for this registration"));
         }
 
-        if (cauHoiRepo.existsByMaKhachHang(tokenKhachHangId.toString())) {
+        if (cauHoiRepo.existsByMaKhachHangAndMaSuKien(tokenKhachHangId.toString(), dangKy.getMaSuKien().toString())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "You have already submitted question for this event"));
         }
 
@@ -280,6 +280,54 @@ public class CauHoiService {
             ch.getNoiDungCauHoi(),
             ch.getNoiDungTraLoi(),
             ch.getTrangThai(),
+            tenKhachHang,
+            tenSuKien,
+            tenNhanVien
+        );
+    
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<?> getBySuKien(Integer maSuKien, HttpServletRequest request) {
+        Claims claims = jwtUtil.extractClaimsFromRequest(request);
+        String maTaiKhoan = claims.get("maTaiKhoan", String.class);
+
+        Optional<TaiKhoan> tkOpt = taiKhoanRepo.findById(maTaiKhoan);
+        if (tkOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Account not found"));
+        }
+
+        TaiKhoan taiKhoan = tkOpt.get();
+        Integer maKhachHang = taiKhoan.getMaKhachHang();
+
+        Optional<CauHoi> chOpt = cauHoiRepo.findByMaSuKienAndMaKhachHang(maSuKien.toString(), maKhachHang.toString());
+        if (chOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "You haven't asked a question for this event"));
+        }
+
+        CauHoi cauHoi = chOpt.get();
+        String tenKhachHang = khachHangRepo.findById(Integer.valueOf(cauHoi.getMaKhachHang()))
+                                           .map(KhachHang::getHoTen)
+                                           .orElse("Unknown");
+    
+        String tenSuKien = suKienRepo.findById(Integer.valueOf(cauHoi.getMaSuKien()))
+                                      .map(SuKien::getTenSuKien)
+                                      .orElse("Unknown");
+    
+        String tenNhanVien = null;
+        if ("Đã xử lý".equals(cauHoi.getTrangThai()) && cauHoi.getMaNhanVien() == null) {
+            tenNhanVien = "Quản lí";
+        } else if (cauHoi.getMaNhanVien() != null) {
+            tenNhanVien = nhanVienRepo.findById(Integer.valueOf(cauHoi.getMaNhanVien()))
+                                      .map(NhanVien::getHoTen)
+                                      .orElse("Unknown");
+        }
+
+        GetAllCauHoiResponse response = new GetAllCauHoiResponse(
+            cauHoi.getMaCauHoi(),
+            cauHoi.getNoiDungCauHoi(),
+            cauHoi.getNoiDungTraLoi(),
+            cauHoi.getTrangThai(),
             tenKhachHang,
             tenSuKien,
             tenNhanVien

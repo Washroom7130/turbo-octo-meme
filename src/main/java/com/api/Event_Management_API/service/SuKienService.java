@@ -112,8 +112,8 @@ public class SuKienService {
 
             // Validate date
             LocalDateTime now = LocalDateTime.now();
-            if (request.getNgayBatDau().isBefore(now) || request.getNgayKetThuc().isBefore(now)) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Dates cannot be in the past"));
+            if (request.getNgayBatDau().isBefore(now.plusDays(3)) || request.getNgayKetThuc().isBefore(now.plusDays(3))) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Dates cannot be in the past and must be 3 days before start date"));
             }
 
             if (request.getNgayKetThuc().isBefore(request.getNgayBatDau())) {
@@ -533,7 +533,7 @@ public class SuKienService {
             tokenRepo.delete(cancelToken);
         });
     
-        return ResponseEntity.ok(Map.of("message", "Payment confirmed successfully"));
+        return ResponseEntity.ok(Map.of("message", "Payment confirmed successfully", "maDangKy", maDangKy));
     }
     
     public ResponseEntity<?> paymentCancel(String token, HttpServletRequest request) {
