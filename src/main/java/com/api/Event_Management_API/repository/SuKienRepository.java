@@ -32,7 +32,7 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
     long countByNgayTaoSuKienBetweenAndTrangThaiSuKien(LocalDateTime start, LocalDateTime end, String status);
     long countByNgayTaoSuKienBetweenAndTrangThaiSuKienIn(LocalDateTime start, LocalDateTime end, List<String> statuses);
     // Count upcoming: ngayBatDau > end of this time range
-    @Query("SELECT COUNT(s) FROM SuKien s WHERE s.ngayBatDau > :rangeEnd")
+    @Query("SELECT COUNT(s) FROM SuKien s WHERE s.ngayBatDau > :rangeEnd AND s.trangThaiSuKien != 'Hủy bỏ'")
     int countUpcomingSuKienAfterRangeEnd(@Param("rangeEnd") LocalDateTime rangeEnd);
 
     // Count ongoing: ngayBatDau ∈ [rangeStart, rangeEnd)

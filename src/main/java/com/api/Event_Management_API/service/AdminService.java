@@ -352,46 +352,42 @@ public class AdminService {
 
         // calculate revenue in smaller time ranges
         Map<String, Float> revenueTimeline = new LinkedHashMap<>();
-
         Duration totalDuration = Duration.between(startDate, endDate);
         Duration step = totalDuration.dividedBy(10);
-
         LocalDateTime rangeStart = startDate;
 
         for (int i = 0; i < 10; i++) {
             LocalDateTime rangeEnd = (i < 9) ? rangeStart.plus(step) : endDate;
 
             Float sum = hoaDonRepo.sumRevenueBetween(rangeStart, rangeEnd);
-            revenueTimeline.put(rangeStart.toLocalDate().toString(), sum != null ? sum : 0f);
+            String key = rangeStart.toLocalDate() + " - " + rangeEnd.toLocalDate();
 
+            revenueTimeline.put(key, sum != null ? sum : 0f);
             rangeStart = rangeEnd;
         }
-
         stats.put("revenueTimeline", revenueTimeline);
 
         // Statistics for KhachHang trangThai
-
         rangeStart = startDate;
-
         Map<String, Map<String, Long>> khachHangTimeline = new LinkedHashMap<>();
-
+        
         for (int i = 0; i < 10; i++) {
             LocalDateTime rangeEnd = (i < 9) ? rangeStart.plus(step) : endDate;
-
+        
             Long active = taiKhoanRepo.countActiveKhachHangBetween(rangeStart, rangeEnd);
             Long nonActive = taiKhoanRepo.countNonActiveKhachHangBetween(rangeStart, rangeEnd);
-
+        
             Map<String, Long> countMap = new HashMap<>();
             countMap.put("active", active != null ? active : 0);
             countMap.put("non-active", nonActive != null ? nonActive : 0);
-
-            khachHangTimeline.put(rangeStart.toLocalDate().toString(), countMap);
-
+        
+            String key = rangeStart.toLocalDate() + " - " + rangeEnd.toLocalDate();
+            khachHangTimeline.put(key, countMap);
+        
             rangeStart = rangeEnd;
         }
-
         stats.put("khachHangTimeline", khachHangTimeline);
-
+        
         // Statistics for trangThai of suKien entity
         rangeStart = startDate;
         Map<String, Map<String, Integer>> suKienTrangThaiTimeline = new LinkedHashMap<>();
@@ -408,10 +404,11 @@ public class AdminService {
             countMap.put("ongoing", ongoing);
             countMap.put("cancelled", cancelled);
 
-            suKienTrangThaiTimeline.put(rangeStart.toLocalDate().toString(), countMap);
+            String key = rangeStart.toLocalDate() + " - " + rangeEnd.toLocalDate();
+            suKienTrangThaiTimeline.put(key, countMap);
+
             rangeStart = rangeEnd;
         }
-
         stats.put("suKienTrangThaiTimeline", suKienTrangThaiTimeline);
 
         return ResponseEntity.ok(stats);
