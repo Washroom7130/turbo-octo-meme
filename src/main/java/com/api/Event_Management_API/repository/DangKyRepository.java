@@ -1,10 +1,13 @@
 package com.api.Event_Management_API.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.api.Event_Management_API.model.DangKy;
 
@@ -23,4 +26,11 @@ public interface DangKyRepository extends JpaRepository<DangKy, String> {
         Integer maKhachHang, String hoTen, String tenSuKien, Pageable pageable
     );
     boolean existsByMaSuKienAndViTriGheAndTrangThaiDangKy(Integer maSuKien, String viTriGhe, String trangThaiDangKy);
+    @Query("SELECT dk.maSuKien, COUNT(dk) " +
+       "FROM DangKy dk " +
+       "WHERE dk.ngayDangKy BETWEEN :start AND :end " +
+       "GROUP BY dk.maSuKien " +
+       "ORDER BY COUNT(dk) DESC")
+    List<Object[]> findTopSuKienByDangKyCountInRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
 }

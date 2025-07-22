@@ -401,7 +401,14 @@ public class SuKienService {
 
         Optional<KhachHang> khachHang = khachHangRepo.findById(taiKhoanOptional.get().getMaKhachHang());
 
-        // Check if user has already signed up
+        // Check if user has already signed up or sign up and have a pending payment
+
+        if (dangKyRepo.existsByMaKhachHangAndMaSuKienAndTrangThaiDangKy(
+                khachHang.get().getMaKhachHang(), maSuKien, "Đang xử lý")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "You have already signed up for this event and have a pending payment"));
+        }
+
         if (dangKyRepo.existsByMaKhachHangAndMaSuKienAndTrangThaiDangKy(
                 khachHang.get().getMaKhachHang(), maSuKien, "Thành công")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

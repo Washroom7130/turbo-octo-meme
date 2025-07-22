@@ -25,4 +25,8 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
         @Param("start") LocalDateTime start,
         @Param("end") LocalDateTime end
     );
+    @Query("SELECT SUM(h.tongTien) FROM HoaDon h " +
+        "WHERE h.trangThaiHoaDon = 'Đã thanh toán' AND h.thoiGianThanhCong BETWEEN :start AND :end")
+    Float sumRevenueBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
 }

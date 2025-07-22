@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 
@@ -29,4 +31,15 @@ public interface SuKienRepository extends JpaRepository<SuKien, Integer> {
     long countByNgayTaoSuKienBetween(LocalDateTime start, LocalDateTime end);
     long countByNgayTaoSuKienBetweenAndTrangThaiSuKien(LocalDateTime start, LocalDateTime end, String status);
     long countByNgayTaoSuKienBetweenAndTrangThaiSuKienIn(LocalDateTime start, LocalDateTime end, List<String> statuses);
+    // Count upcoming: ngayBatDau > end of this time range
+    @Query("SELECT COUNT(s) FROM SuKien s WHERE s.ngayBatDau > :rangeEnd")
+    int countUpcomingSuKienAfterRangeEnd(@Param("rangeEnd") LocalDateTime rangeEnd);
+
+    // Count ongoing: ngayBatDau ∈ [rangeStart, rangeEnd)
+    @Query("SELECT COUNT(s) FROM SuKien s WHERE s.ngayBatDau >= :rangeStart AND s.ngayBatDau < :rangeEnd")
+    int countOngoingSuKienBetween(@Param("rangeStart") LocalDateTime rangeStart, @Param("rangeEnd") LocalDateTime rangeEnd);
+
+    // Count cancelled: ngayTao ∈ [rangeStart, rangeEnd) AND trangThai = 'Hủy bỏ'
+    @Query("SELECT COUNT(s) FROM SuKien s WHERE s.ngayTaoSuKien >= :rangeStart AND s.ngayTaoSuKien < :rangeEnd AND s.trangThaiSuKien = 'Hủy bỏ'")
+    int countCancelledSuKienInRange(@Param("rangeStart") LocalDateTime rangeStart, @Param("rangeEnd") LocalDateTime rangeEnd);
 }

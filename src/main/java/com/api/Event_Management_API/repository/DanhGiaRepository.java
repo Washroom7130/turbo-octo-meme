@@ -19,14 +19,9 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
     // Count total ratings
     long countByNgayDanhGiaBetween(LocalDateTime start, LocalDateTime end);
 
-    // Sum total rating points
-    @Query("SELECT SUM(d.loaiDanhGia) FROM DanhGia d WHERE d.ngayDanhGia BETWEEN :start AND :end")
-    Integer sumLoaiDanhGiaByNgayDanhGiaBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
-    @Query("SELECT d.suKien.tenSuKien, AVG(d.loaiDanhGia) " +
-        "FROM DanhGia d " +
-        "WHERE d.ngayDanhGia BETWEEN :start AND :end " +
-        "GROUP BY d.suKien.tenSuKien")
-    List<Object[]> findAverageRatingPerEvent(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
+    @Query("SELECT dg.maSuKien, AVG(dg.loaiDanhGia) " +
+       "FROM DanhGia dg " +
+       "WHERE dg.ngayDanhGia BETWEEN :start AND :end " +
+       "GROUP BY dg.maSuKien")
+    List<Object[]> findAverageRatingPerSuKienInRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

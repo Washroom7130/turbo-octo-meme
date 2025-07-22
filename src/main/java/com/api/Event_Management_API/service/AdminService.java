@@ -1,10 +1,12 @@
 package com.api.Event_Management_API.service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,9 +23,12 @@ import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.Admin.AddNhanVienRequest;
 import com.api.Event_Management_API.dto.Admin.GetTaiKhoanListResponse;
+import com.api.Event_Management_API.dto.DanhGia.SuKienRating;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.NhanVien;
+import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
+import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DanhGiaRepository;
 import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
@@ -41,6 +46,7 @@ public class AdminService {
     private final SuKienRepository suKienRepo;
     private final TicketRepository ticketRepo;
     private final DanhGiaRepository danhGiaRepo;
+    private final DangKyRepository dangKyRepo;
     private final PasswordEncoder passwordEncoder;
 
     public AdminService(TaiKhoanRepository taiKhoanRepo,
@@ -50,6 +56,7 @@ public class AdminService {
                         SuKienRepository suKienRepo,
                         TicketRepository ticketRepo,
                         DanhGiaRepository danhGiaRepo,
+                        DangKyRepository dangKyRepo,
                         PasswordEncoder passwordEncoder) {
         this.taiKhoanRepo = taiKhoanRepo;
         this.nhanVienRepo = nhanVienRepo;
@@ -58,6 +65,7 @@ public class AdminService {
         this.ticketRepo = ticketRepo;
         this.suKienRepo = suKienRepo;
         this.danhGiaRepo = danhGiaRepo;
+        this.dangKyRepo = dangKyRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -256,52 +264,155 @@ public class AdminService {
 
         // Rating stuff
         // Rating part will go here
-        long totalRatings = danhGiaRepo.countByNgayDanhGiaBetween(startDate, endDate);
-        Integer sumRatings = danhGiaRepo.sumLoaiDanhGiaByNgayDanhGiaBetween(startDate, endDate);
-        double avgRating = (totalRatings > 0 && sumRatings != null) ? (double) sumRatings / totalRatings : 0.0;
+        List<Object[]> avgRatings = danhGiaRepo.findAverageRatingPerSuKienInRange(startDate, endDate);
 
-        stats.put("totalRatings", totalRatings);
-        stats.put("avgRating", avgRating);
-
-        // Average rating per event
-        List<Object[]> averageRatingsPerEvent = danhGiaRepo.findAverageRatingPerEvent(startDate, endDate);
-
-        int goodCount = 0;
-        int badCount = 0;
-        List<Map.Entry<String, Double>> ratingList = new ArrayList<>();
-
-        for (Object[] obj : averageRatingsPerEvent) {
-            String tenSuKien = (String) obj[0];
-            Double avg = (Double) obj[1];
-            if (avg != null) {
-                if (avg >= 3.0) goodCount++;
-                else badCount++;
-                ratingList.add(new AbstractMap.SimpleEntry<>(tenSuKien, avg));
-            }
+        Map<Integer, Double> avgMap = new HashMap<>();
+        for (Object[] row : avgRatings) {
+            Integer maSuKien = (Integer) row[0];
+            Double avg = (Double) row[1];
+            avgMap.put(maSuKien, avg);
         }
 
-        int totalRatedEvents = goodCount + badCount;
-        double goodPercent = totalRatedEvents > 0 ? (goodCount * 100.0) / totalRatedEvents : 0.0;
-        double badPercent = totalRatedEvents > 0 ? (badCount * 100.0) / totalRatedEvents : 0.0;
+        List<SuKien> allRatedSuKiens = suKienRepo.findAllById(avgMap.keySet());
+        List<SuKienRating> good = new ArrayList<>();
+        List<SuKienRating> bad = new ArrayList<>();
 
-        stats.put("suKienGoodRating", String.format("%.0f%%", goodPercent));
-        stats.put("suKienBadRating", String.format("%.0f%%", badPercent));
+        for (SuKien sk : allRatedSuKiens) {
+            double avg = avgMap.get(sk.getMaSuKien());
+            SuKienRating skRating = new SuKienRating();
+            skRating.setTenSuKien(sk.getTenSuKien());
+            skRating.setAvg(avg);
+        
+            if (avg >= 3.0) good.add(skRating);
+            else bad.add(skRating);
+        }        
 
-        // Sort and get top 3
-        List<Map<String, Double>> topThreeGood = ratingList.stream()
-            .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
-            .limit(3)
-            .map(e -> Map.of(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
+        int total = good.size() + bad.size();
+        double goodPercent = total > 0 ? Math.round(((double) good.size() / total) * 1000.0) / 10.0 : 0.0;
+        double badPercent = 100.0 - goodPercent;
 
-        List<Map<String, Double>> topThreeBad = ratingList.stream()
-            .sorted(Comparator.comparingDouble(Map.Entry::getValue))
-            .limit(3)
-            .map(e -> Map.of(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
+        List<Map<String, Object>> top3Good = good.stream()
+                .sorted(Comparator.comparingDouble(SuKienRating::getAvg).reversed())
+                .limit(3)
+                .map(r -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("tenSuKien", r.getTenSuKien());
+                    m.put("avg", Math.round(r.getAvg() * 10.0) / 10.0); // round to 1 decimal
+                    return m;
+                })
+                .toList();
 
-        stats.put("topThreeGood", topThreeGood);
-        stats.put("topThreeBad", topThreeBad);
+        List<Map<String, Object>> top3Bad = bad.stream()
+                .sorted(Comparator.comparingDouble(SuKienRating::getAvg))
+                .limit(3)
+                .map(r -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("tenSuKien", r.getTenSuKien());
+                    m.put("avg", Math.round(r.getAvg() * 10.0) / 10.0); // round to 1 decimal
+                    return m;
+                })
+                .toList();
+
+        Map<String, Object> ratingStats = new HashMap<>();
+        ratingStats.put("suKienTot", goodPercent);
+        ratingStats.put("suKienTe", badPercent);
+        ratingStats.put("top3SuKienTot", top3Good);
+        ratingStats.put("top3SuKienTe", top3Bad);
+        
+        stats.put("ratingStats", ratingStats);
+
+        // List top 3 events with highest dangKy count
+        List<Object[]> topDangKyRaw = dangKyRepo.findTopSuKienByDangKyCountInRange(startDate, endDate);
+        List<Integer> topMaSuKienList = topDangKyRaw.stream()
+                .limit(3)
+                .map(row -> (Integer) row[0])
+                .toList();
+
+        Map<Integer, Long> dangKyCountMap = topDangKyRaw.stream()
+                .limit(3)
+                .collect(Collectors.toMap(
+                        row -> (Integer) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        List<SuKien> topSuKiens = suKienRepo.findAllById(topMaSuKienList);
+
+        List<Map<String, Object>> top3MostRegistered = topSuKiens.stream()
+                .map(sk -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("maSuKien", sk.getMaSuKien());
+                    m.put("tenSuKien", sk.getTenSuKien());
+                    m.put("soLuongDangKy", dangKyCountMap.get(sk.getMaSuKien()));
+                    return m;
+                })
+                .sorted((a, b) -> Long.compare((Long) b.get("soLuongDangKy"), (Long) a.get("soLuongDangKy")))
+                .toList();
+
+        stats.put("top3MostRegistered", top3MostRegistered);
+
+        // calculate revenue in smaller time ranges
+        Map<String, Float> revenueTimeline = new LinkedHashMap<>();
+
+        Duration totalDuration = Duration.between(startDate, endDate);
+        Duration step = totalDuration.dividedBy(10);
+
+        LocalDateTime rangeStart = startDate;
+
+        for (int i = 0; i < 10; i++) {
+            LocalDateTime rangeEnd = (i < 9) ? rangeStart.plus(step) : endDate;
+
+            Float sum = hoaDonRepo.sumRevenueBetween(rangeStart, rangeEnd);
+            revenueTimeline.put(rangeStart.toLocalDate().toString(), sum != null ? sum : 0f);
+
+            rangeStart = rangeEnd;
+        }
+
+        stats.put("revenueTimeline", revenueTimeline);
+
+        // Statistics for KhachHang trangThai
+
+        rangeStart = startDate;
+
+        Map<String, Map<String, Long>> khachHangTimeline = new LinkedHashMap<>();
+
+        for (int i = 0; i < 10; i++) {
+            LocalDateTime rangeEnd = (i < 9) ? rangeStart.plus(step) : endDate;
+
+            Long active = taiKhoanRepo.countActiveKhachHangBetween(rangeStart, rangeEnd);
+            Long nonActive = taiKhoanRepo.countNonActiveKhachHangBetween(rangeStart, rangeEnd);
+
+            Map<String, Long> countMap = new HashMap<>();
+            countMap.put("active", active != null ? active : 0);
+            countMap.put("non-active", nonActive != null ? nonActive : 0);
+
+            khachHangTimeline.put(rangeStart.toLocalDate().toString(), countMap);
+
+            rangeStart = rangeEnd;
+        }
+
+        stats.put("khachHangTimeline", khachHangTimeline);
+
+        // Statistics for trangThai of suKien entity
+        rangeStart = startDate;
+        Map<String, Map<String, Integer>> suKienTrangThaiTimeline = new LinkedHashMap<>();
+
+        for (int i = 0; i < 10; i++) {
+            LocalDateTime rangeEnd = (i < 9) ? rangeStart.plus(step) : endDate;
+
+            int upcoming = suKienRepo.countUpcomingSuKienAfterRangeEnd(rangeEnd);
+            int ongoing = suKienRepo.countOngoingSuKienBetween(rangeStart, rangeEnd);
+            int cancelled = suKienRepo.countCancelledSuKienInRange(rangeStart, rangeEnd);
+
+            Map<String, Integer> countMap = new HashMap<>();
+            countMap.put("upcoming", upcoming);
+            countMap.put("ongoing", ongoing);
+            countMap.put("cancelled", cancelled);
+
+            suKienTrangThaiTimeline.put(rangeStart.toLocalDate().toString(), countMap);
+            rangeStart = rangeEnd;
+        }
+
+        stats.put("suKienTrangThaiTimeline", suKienTrangThaiTimeline);
 
         return ResponseEntity.ok(stats);
     }
