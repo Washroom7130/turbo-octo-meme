@@ -204,10 +204,8 @@ public class SuKienService {
         }
     }
 
-    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search, String trangThai) {
+    public ResponseEntity<?> getAll(int page, int size, Integer maDanhMuc, String search, String trangThai, Float costStart, Float costEnd) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<SuKien> suKienPage;
-    
         // Convert trangThai to list
         List<String> trangThaiList = null;
         if (trangThai != null && !trangThai.isBlank()) {
@@ -219,33 +217,42 @@ public class SuKienService {
     
         boolean hasSearch = search != null && !search.isBlank();
         boolean hasStatusList = trangThaiList != null && !trangThaiList.isEmpty();
+        
+        Page<SuKien> suKienPage = suKienRepo.findFiltered(
+            maDanhMuc,
+            hasSearch ? search : null,
+            hasStatusList ? trangThaiList : null,
+            (costStart != null && costEnd != null) ? costStart : null,
+            (costStart != null && costEnd != null) ? costEnd : null,
+            pageable
+        );
     
-        if (maDanhMuc != null) {
-            if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
-            }
+        // if (maDanhMuc != null) {
+        //     if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
+        //         return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
+        //     }
     
-            if (hasSearch && hasStatusList) {
-                suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(maDanhMuc, search, trangThaiList, pageable);
-            } else if (hasSearch) {
-                suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable);
-            } else if (hasStatusList) {
-                suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienIn(maDanhMuc, trangThaiList, pageable);
-            } else {
-                suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
-            }
+        //     if (hasSearch && hasStatusList) {
+        //         suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(maDanhMuc, search, trangThaiList, pageable);
+        //     } else if (hasSearch) {
+        //         suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable);
+        //     } else if (hasStatusList) {
+        //         suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienIn(maDanhMuc, trangThaiList, pageable);
+        //     } else {
+        //         suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
+        //     }
     
-        } else {
-            if (hasSearch && hasStatusList) {
-                suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(search, trangThaiList, pageable);
-            } else if (hasSearch) {
-                suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable);
-            } else if (hasStatusList) {
-                suKienPage = suKienRepo.findByTrangThaiSuKienIn(trangThaiList, pageable);
-            } else {
-                suKienPage = suKienRepo.findAll(pageable);
-            }
-        }
+        // } else {
+        //     if (hasSearch && hasStatusList) {
+        //         suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(search, trangThaiList, pageable);
+        //     } else if (hasSearch) {
+        //         suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable);
+        //     } else if (hasStatusList) {
+        //         suKienPage = suKienRepo.findByTrangThaiSuKienIn(trangThaiList, pageable);
+        //     } else {
+        //         suKienPage = suKienRepo.findAll(pageable);
+        //     }
+        // }
     
         Page<SuKienResponse> responsePage = suKienPage.map(sk -> {
             List<DanhGia> danhGias = danhGiaRepo.findByMaSuKien(sk.getMaSuKien());
@@ -458,8 +465,8 @@ public class SuKienService {
 
         // Setting correct timezone
         long expireLong = hoaDon.getThoiGianHieuLuc().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond();
-        String successUrl = token_success.getMaToken() + "/success";
-        String cancelUrl = token_cancel.getMaToken() + "/cancel";
+        String successUrl = "dangky/thanhcong/" + token_success.getMaToken();
+        String cancelUrl = "dangky/huy/" + token_cancel.getMaToken();
 
         OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
 

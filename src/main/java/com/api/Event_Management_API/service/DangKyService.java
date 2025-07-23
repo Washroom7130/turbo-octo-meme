@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +52,7 @@ public class DangKyService {
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
         String vaiTro = claims.get("vaiTro", String.class);
     
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayDangKy"));
         Page<DangKy> pageResult;
     
         if ("KhachHang".equals(vaiTro)) {

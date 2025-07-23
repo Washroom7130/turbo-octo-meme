@@ -62,8 +62,14 @@ public class SuKienController {
     }
 
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(required = false) Integer maDanhMuc, @RequestParam(required = false) String search, @RequestParam(required = false) String trangThai) {
-        return suKienService.getAll(page, size, maDanhMuc, search, trangThai);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, 
+                                    @RequestParam(defaultValue = "10") int size, 
+                                    @RequestParam(required = false) Integer maDanhMuc, 
+                                    @RequestParam(required = false) String search, 
+                                    @RequestParam(required = false) String trangThai,
+                                    @RequestParam(required = false) Float costStart,
+                                    @RequestParam(required = false) Float costEnd) {
+        return suKienService.getAll(page, size, maDanhMuc, search, trangThai, costStart, costEnd);
     }
 
     @GetMapping("/get/{maSuKien}")

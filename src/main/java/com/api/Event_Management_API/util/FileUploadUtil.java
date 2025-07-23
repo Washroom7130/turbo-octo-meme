@@ -21,6 +21,11 @@ public class FileUploadUtil {
             return null; // image field is not required so leaves null here
         }
 
+        // check file size (max 10MB)
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds 10MB limit");
+        }
+
         String originalFilename = file.getOriginalFilename();
 
         // check filename format
