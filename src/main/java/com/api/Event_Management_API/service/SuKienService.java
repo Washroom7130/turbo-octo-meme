@@ -227,33 +227,6 @@ public class SuKienService {
             pageable
         );
     
-        // if (maDanhMuc != null) {
-        //     if (danhMucRepo.findById(maDanhMuc).isEmpty()) {
-        //         return ResponseEntity.badRequest().body(Map.of("error", "Invalid category ID"));
-        //     }
-    
-        //     if (hasSearch && hasStatusList) {
-        //         suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(maDanhMuc, search, trangThaiList, pageable);
-        //     } else if (hasSearch) {
-        //         suKienPage = suKienRepo.findByMaDanhMucAndTenSuKienContainingIgnoreCase(maDanhMuc, search, pageable);
-        //     } else if (hasStatusList) {
-        //         suKienPage = suKienRepo.findByMaDanhMucAndTrangThaiSuKienIn(maDanhMuc, trangThaiList, pageable);
-        //     } else {
-        //         suKienPage = suKienRepo.findByMaDanhMuc(maDanhMuc, pageable);
-        //     }
-    
-        // } else {
-        //     if (hasSearch && hasStatusList) {
-        //         suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCaseAndTrangThaiSuKienIn(search, trangThaiList, pageable);
-        //     } else if (hasSearch) {
-        //         suKienPage = suKienRepo.findByTenSuKienContainingIgnoreCase(search, pageable);
-        //     } else if (hasStatusList) {
-        //         suKienPage = suKienRepo.findByTrangThaiSuKienIn(trangThaiList, pageable);
-        //     } else {
-        //         suKienPage = suKienRepo.findAll(pageable);
-        //     }
-        // }
-    
         Page<SuKienResponse> responsePage = suKienPage.map(sk -> {
             List<DanhGia> danhGias = danhGiaRepo.findByMaSuKien(sk.getMaSuKien());
     
@@ -468,9 +441,14 @@ public class SuKienService {
         String successUrl = "dangky/thanhcong/" + token_success.getMaToken();
         String cancelUrl = "dangky/huy/" + token_cancel.getMaToken();
 
-        OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
+        String url;
 
-        String url = paymentUtil.getPaymentURL(suKien.getTenSuKien(), Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
+        if (hoaDon.getTongTien() == 0) {
+            url = "http://localhost:3000/" + successUrl;
+        } else {
+            OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
+            url = paymentUtil.getPaymentURL(suKien.getTenSuKien(), Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
+        }
 
         long currentSuccessfulRegistration = dangKyRepo.countByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công");
 
