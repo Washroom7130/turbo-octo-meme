@@ -1,7 +1,6 @@
 package com.api.Event_Management_API.service;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,11 +13,13 @@ import org.springframework.stereotype.Service;
 
 import com.api.Event_Management_API.dto.HoaDon.GetHoaDonResponse;
 import com.api.Event_Management_API.model.DangKy;
+import com.api.Event_Management_API.model.DiemDanh;
 import com.api.Event_Management_API.model.HoaDon;
 import com.api.Event_Management_API.model.KhachHang;
 import com.api.Event_Management_API.model.SuKien;
 import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.DangKyRepository;
+import com.api.Event_Management_API.repository.DiemDanhRepository;
 import com.api.Event_Management_API.repository.HoaDonRepository;
 import com.api.Event_Management_API.repository.KhachHangRepository;
 import com.api.Event_Management_API.repository.SuKienRepository;
@@ -36,6 +37,7 @@ public class HoaDonService {
     private final HoaDonRepository hoaDonRepo;
     private final DangKyRepository dangKyRepo;
     private final SuKienRepository suKienRepo;
+    private final DiemDanhRepository diemDanhRepo;
     private final JwtUtil jwtUtil;
 
     public HoaDonService(TaiKhoanRepository taiKhoanRepo,
@@ -43,12 +45,14 @@ public class HoaDonService {
                         HoaDonRepository hoaDonRepo,
                         DangKyRepository dangKyRepo,
                         SuKienRepository suKienRepo,
+                        DiemDanhRepository diemDanhRepo,
                         JwtUtil jwtUtil) {
         this.taiKhoanRepo = taiKhoanRepo;
         this.khachHangRepo = khachHangRepo;
         this.hoaDonRepo = hoaDonRepo;
         this.dangKyRepo = dangKyRepo;
         this.suKienRepo = suKienRepo;
+        this.diemDanhRepo = diemDanhRepo;
         this.jwtUtil = jwtUtil;
     }
     
@@ -104,6 +108,10 @@ public class HoaDonService {
                                     .map(SuKien::getTenSuKien)
                                     .orElse("Unknown");
 
+            String maDiemDanh = diemDanhRepo.findByMaDangKy(dk.get().getMaDangKy())
+                                    .map(DiemDanh::getMaDiemDanh)
+                                    .orElse("Unknown");
+
             return new GetHoaDonResponse(
                 hd.getMaHoaDon(),
                 hd.getTrangThaiHoaDon(),
@@ -112,7 +120,8 @@ public class HoaDonService {
                 hd.getPhuongThucThanhToan(),
                 tenKhachHang,
                 tenSuKien,
-                dk.get().getMaSuKien()
+                dk.get().getMaSuKien(),
+                maDiemDanh
             );
         });
 
@@ -150,6 +159,10 @@ public class HoaDonService {
                                 .map(SuKien::getTenSuKien)
                                 .orElse("Unknown");
 
+        String maDiemDanh = diemDanhRepo.findByMaDangKy(dk.get().getMaDangKy())
+                                .map(DiemDanh::getMaDiemDanh)
+                                .orElse("Unknown");
+
         GetHoaDonResponse response = new GetHoaDonResponse(
             hoaDon.getMaHoaDon(),
             hoaDon.getTrangThaiHoaDon(),
@@ -158,7 +171,8 @@ public class HoaDonService {
             hoaDon.getPhuongThucThanhToan(),
             tenKhachHang,
             tenSuKien,
-            dk.get().getMaSuKien()
+            dk.get().getMaSuKien(),
+            maDiemDanh
         );
 
         return ResponseEntity.ok(response);

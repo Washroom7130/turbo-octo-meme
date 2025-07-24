@@ -18,4 +18,5 @@ public class GetHoaDonResponse {
     private String tenKhachHang;
     private String tenSuKien;
     private Integer maSuKien;
+    private String maDiemDanh;
 }

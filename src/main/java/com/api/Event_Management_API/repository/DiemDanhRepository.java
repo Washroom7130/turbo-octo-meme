@@ -1,5 +1,7 @@
 package com.api.Event_Management_API.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +15,6 @@ public interface DiemDanhRepository extends JpaRepository<DiemDanh, String> {
         String hoTen,
         Pageable pageable
     );
+    Optional<DiemDanh> findByMaDangKy(String maDangKy);
 
 }

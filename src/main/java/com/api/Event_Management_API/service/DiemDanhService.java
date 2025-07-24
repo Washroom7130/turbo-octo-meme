@@ -15,19 +15,31 @@ import com.api.Event_Management_API.dto.DiemDanh.GetDiemDanhResponse;
 import com.api.Event_Management_API.model.DangKy;
 import com.api.Event_Management_API.model.DiemDanh;
 import com.api.Event_Management_API.model.SuKien;
+import com.api.Event_Management_API.model.TaiKhoan;
 import com.api.Event_Management_API.repository.DangKyRepository;
 import com.api.Event_Management_API.repository.DiemDanhRepository;
+import com.api.Event_Management_API.repository.TaiKhoanRepository;
+import com.api.Event_Management_API.util.JwtUtil;
+
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class DiemDanhService {
     
     private final DangKyRepository dangKyRepo;
     private final DiemDanhRepository diemDanhRepo;
+    private final TaiKhoanRepository taiKhoanRepo;
+    private final JwtUtil jwtUtil;
 
     public DiemDanhService(DangKyRepository dangKyRepo,
-                        DiemDanhRepository diemDanhRepo) {
+                        DiemDanhRepository diemDanhRepo,
+                        TaiKhoanRepository taiKhoanRepo,
+                        JwtUtil jwtUtil) {
         this.dangKyRepo = dangKyRepo;
         this.diemDanhRepo = diemDanhRepo;
+        this.taiKhoanRepo = taiKhoanRepo;
+        this.jwtUtil = jwtUtil;
     }
 
     public ResponseEntity<?> getAllByMaSuKien(Integer maSuKien, int page, int size, String search) {
@@ -59,7 +71,11 @@ public class DiemDanhService {
         return ResponseEntity.ok(responsePage);
     }
 
-    public ResponseEntity<?> getByMaDiemDanh(String maDiemDanh) {
+    public ResponseEntity<?> getByMaDiemDanh(String maDiemDanh, HttpServletRequest request) {
+        Claims claims = jwtUtil.extractClaimsFromRequest(request);
+        String maTaiKhoan = claims.get("maTaiKhoan", String.class);
+        String vaiTro = claims.get("vaiTro", String.class);
+        
         Optional<DiemDanh> diemDanhOpt = diemDanhRepo.findById(maDiemDanh);
         if (diemDanhOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Check-in record not found"));
@@ -68,6 +84,14 @@ public class DiemDanhService {
         DiemDanh dd = diemDanhOpt.get();
     
         DangKy dk = dd.getDangKy();
+
+        if (vaiTro.equals("KhachHang")) {
+            Optional<TaiKhoan> tk = taiKhoanRepo.findById(maTaiKhoan);
+            if (!tk.get().getMaKhachHang().equals(dk.getMaKhachHang())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Check-in record not found"));
+            }
+        }
+
         String tenKhachHang = (dk != null && dk.getKhachHang() != null)
             ? dk.getKhachHang().getHoTen()
             : "Unknown";

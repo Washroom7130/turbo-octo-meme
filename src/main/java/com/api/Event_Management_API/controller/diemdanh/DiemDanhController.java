@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.api.Event_Management_API.service.DiemDanhService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/diemdanh")
 public class DiemDanhController {
@@ -30,10 +32,10 @@ public class DiemDanhController {
         return diemDanhService.getAllByMaSuKien(maSuKien, page, size, search);
     }
 
-    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
+    @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
     @GetMapping("/get/{maDiemDanh}")
-    public ResponseEntity<?> getById(@PathVariable String maDiemDanh) {
-        return diemDanhService.getByMaDiemDanh(maDiemDanh);
+    public ResponseEntity<?> getById(@PathVariable String maDiemDanh, HttpServletRequest request) {
+        return diemDanhService.getByMaDiemDanh(maDiemDanh, request);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy')")
