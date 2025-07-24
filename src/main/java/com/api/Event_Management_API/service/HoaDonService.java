@@ -1,6 +1,7 @@
 package com.api.Event_Management_API.service;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -51,7 +52,7 @@ public class HoaDonService {
         this.jwtUtil = jwtUtil;
     }
     
-    public ResponseEntity<?> getAll(int page, int size, HttpServletRequest request, String search) {
+    public ResponseEntity<?> getAll(int page, int size, HttpServletRequest request, String search, String trangThaiSuKien) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
         String vaiTro = claims.get("vaiTro", String.class);
@@ -67,7 +68,13 @@ public class HoaDonService {
             }
 
             Optional<KhachHang> kh = khachHangRepo.findById(tk.get().getMaKhachHang());
-            if (search != null && !search.isBlank()) {
+
+            if (trangThaiSuKien != null && !trangThaiSuKien.isBlank()) {
+                // Filter by SuKien.trangThaiSuKien AND maKhachHang
+                pageResult = hoaDonRepo.findByMaKhachHangAndSuKien_TrangThaiSuKien(
+                    kh.get().getMaKhachHang(), trangThaiSuKien, pageable
+                );
+            } else if (search != null && !search.isBlank()) {
                 pageResult = hoaDonRepo.findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCase(
                     kh.get().getMaKhachHang(), search, pageable
                 );
@@ -75,7 +82,9 @@ public class HoaDonService {
                 pageResult = hoaDonRepo.findAllByMaKhachHang(kh.get().getMaKhachHang(), pageable);
             }
         } else if ("NhanVien".equals(vaiTro) || "QuanLy".equals(vaiTro)) {
-            if (search != null && !search.isBlank()) {
+            if (trangThaiSuKien != null && !trangThaiSuKien.isBlank()) {
+                pageResult = hoaDonRepo.findBySuKien_TrangThaiSuKien(trangThaiSuKien, pageable);
+            } else if (search != null && !search.isBlank()) {
                 pageResult = hoaDonRepo.findByKhachHang_HoTenContainingIgnoreCase(search, pageable);
             } else {
                 pageResult = hoaDonRepo.findAll(pageable);

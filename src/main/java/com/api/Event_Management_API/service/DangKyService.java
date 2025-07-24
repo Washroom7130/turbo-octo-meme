@@ -46,7 +46,7 @@ public class DangKyService {
         this.jwtUtil = jwtUtil;
     }
 
-    public ResponseEntity<?> getAll(int page, int size, String search, HttpServletRequest request) {
+    public ResponseEntity<?> getAll(int page, int size, String search, String trangThaiSuKien, HttpServletRequest request) {
         Claims claims = jwtUtil.extractClaimsFromRequest(request);
     
         String maTaiKhoan = claims.get("maTaiKhoan", String.class);
@@ -62,22 +62,26 @@ public class DangKyService {
             }
     
             Integer maKhachHang = tk.get().getMaKhachHang();
-            if (search != null && !search.isBlank()) {
+            if (trangThaiSuKien != null && !trangThaiSuKien.isBlank()) {
+                pageResult = dangKyRepo.findByMaKhachHangAndSuKien_TrangThaiSuKien(maKhachHang, trangThaiSuKien, pageable);
+            } else if (search != null && !search.isBlank()) {
                 pageResult = dangKyRepo.findByMaKhachHangAndKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCase(
                     maKhachHang, search, search, pageable
                 );
             } else {
                 pageResult = dangKyRepo.findAllByMaKhachHang(maKhachHang, pageable);
-            }
+            }            
     
         } else if ("NhanVien".equals(vaiTro) || "QuanLy".equals(vaiTro)) {
-            if (search != null && !search.isBlank()) {
+            if (trangThaiSuKien != null && !trangThaiSuKien.isBlank()) {
+                pageResult = dangKyRepo.findBySuKien_TrangThaiSuKien(trangThaiSuKien, pageable);
+            } else if (search != null && !search.isBlank()) {
                 pageResult = dangKyRepo.findByKhachHang_HoTenContainingIgnoreCaseOrSuKien_TenSuKienContainingIgnoreCase(
                     search, search, pageable
                 );
             } else {
                 pageResult = dangKyRepo.findAll(pageable);
-            }
+            }            
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authorized"));
         }

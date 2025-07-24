@@ -25,8 +25,12 @@ public class DangKyController {
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")
     @GetMapping("/get/all")
-    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, HttpServletRequest request, @RequestParam(required = false) String search) {
-        return dangKyService.getAll(page, size, search, request);
+    public ResponseEntity<?> getAll(@RequestParam(defaultValue = "0") int page, 
+                                    @RequestParam(defaultValue = "10") int size, 
+                                    HttpServletRequest request, 
+                                    @RequestParam(required = false) String search,
+                                    @RequestParam(required = false) String trangThaiSuKien) {
+        return dangKyService.getAll(page, size, search, trangThaiSuKien, request);
     }
 
     @PreAuthorize("hasAnyAuthority('NhanVien', 'QuanLy', 'KhachHang')")

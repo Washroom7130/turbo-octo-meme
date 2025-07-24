@@ -28,5 +28,27 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
     @Query("SELECT SUM(h.tongTien) FROM HoaDon h " +
         "WHERE h.trangThaiHoaDon = 'Đã thanh toán' AND h.thoiGianThanhCong BETWEEN :start AND :end")
     Float sumRevenueBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+        @Query("""
+        SELECT h FROM HoaDon h
+        JOIN DangKy d ON h.maDangKy = d.maDangKy
+        JOIN SuKien s ON d.maSuKien = s.maSuKien
+        WHERE (:trangThai IS NULL OR s.trangThaiSuKien = :trangThai)
+    """)
+    Page<HoaDon> findBySuKien_TrangThaiSuKien(
+        @Param("trangThai") String trangThai,
+        Pageable pageable
+    );
+    @Query("""
+        SELECT h FROM HoaDon h
+        JOIN DangKy d ON h.maDangKy = d.maDangKy
+        JOIN SuKien s ON d.maSuKien = s.maSuKien
+        WHERE s.trangThaiSuKien = :trangThai
+        AND h.maKhachHang = :maKhachHang
+    """)
+    Page<HoaDon> findByMaKhachHangAndSuKien_TrangThaiSuKien(
+        @Param("maKhachHang") Integer maKhachHang,
+        @Param("trangThai") String trangThai,
+        Pageable pageable
+    );
 
 }

@@ -32,5 +32,26 @@ public interface DangKyRepository extends JpaRepository<DangKy, String> {
        "GROUP BY dk.maSuKien " +
        "ORDER BY COUNT(dk) DESC")
     List<Object[]> findTopSuKienByDangKyCountInRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    @Query("""
+        SELECT dk FROM DangKy dk
+        JOIN SuKien s ON dk.maSuKien = s.maSuKien
+        WHERE (:trangThai IS NULL OR s.trangThaiSuKien = :trangThai)
+    """)
+    Page<DangKy> findBySuKien_TrangThaiSuKien(
+        @Param("trangThai") String trangThai,
+        Pageable pageable
+    );
+
+    @Query("""
+        SELECT dk FROM DangKy dk
+        JOIN SuKien s ON dk.maSuKien = s.maSuKien
+        WHERE dk.maKhachHang = :maKhachHang
+        AND (:trangThai IS NULL OR s.trangThaiSuKien = :trangThai)
+    """)
+    Page<DangKy> findByMaKhachHangAndSuKien_TrangThaiSuKien(
+        @Param("maKhachHang") Integer maKhachHang,
+        @Param("trangThai") String trangThai,
+        Pageable pageable
+    );
 
 }
