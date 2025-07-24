@@ -159,7 +159,7 @@ public class AuthService {
                                 .secure(true)
                                 .path("/")
                                 .maxAge(7 * 60 * 60 * 24)
-                                .sameSite("None")
+                                .sameSite("Strict")
                                 .build();
 
         return ResponseEntity
