@@ -29,7 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig {
 
     // Adjust frontend domain in production
-    private static final String FRONTEND_ORIGIN = "http://localhost:3000";
+    private static final String FRONTEND_ORIGIN = "http://localhost:10000";
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {

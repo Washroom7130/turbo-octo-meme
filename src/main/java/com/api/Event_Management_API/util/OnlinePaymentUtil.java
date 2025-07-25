@@ -10,7 +10,7 @@ public class OnlinePaymentUtil {
     String apiKey = System.getProperty("PAYOS_API_KEY");
     String checksumKey = System.getProperty("PAYOS_CHECKSUM_KEY");
 
-    String domain = "http://localhost:3000/";
+    String domain = "http://localhost:10000/";
 
     final PayOS payOS = new PayOS(clientId, apiKey, checksumKey);
 

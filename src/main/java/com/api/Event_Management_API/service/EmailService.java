@@ -14,7 +14,7 @@ public class EmailService {
 
     public void sendVerificationEmail(String to, String token) {
         String subject = "Xác minh tài khoản của bạn";
-        String verificationUrl = "http://localhost:3000/api/auth/verify/" + token;
+        String verificationUrl = "http://localhost:10000/api/auth/verify/" + token;
         String message = "Cảm ơn bạn đã đăng ký!\n\nVui lòng xác minh tài khoản của bạn bằng cách nhấp vào liên kết dưới đây:\n" + verificationUrl + "\n\nLiên kết này sẽ hết hạn sau 3 ngày.";
 
         SimpleMailMessage email = new SimpleMailMessage();
@@ -27,7 +27,7 @@ public class EmailService {
 
     @Async
     public void sendPasswordResetEmail(String to, String token) {
-        String resetLink = "http://localhost:3000/reset_password/" + token;
+        String resetLink = "http://localhost:10000/reset_password/" + token;
 
         String subject = "Reset Your Password";
         String message = "Click the link below to reset your password:\n" + resetLink +

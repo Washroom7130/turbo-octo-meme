@@ -444,7 +444,7 @@ public class SuKienService {
         String url;
 
         if (hoaDon.getTongTien() == 0) {
-            url = "http://localhost:3000/" + successUrl;
+            url = "http://localhost:10000/" + successUrl;
         } else {
             OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
             url = paymentUtil.getPaymentURL("Vé tham dự", Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
