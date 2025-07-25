@@ -31,7 +31,7 @@ public class Ticket {
     //@NotBlank(message = "Please enter your answer")
     private String noiDungGiaiDap;
 
-    @Pattern(regexp = "^(Chưa xử lý|Đã xử lí)$", message = "Please enter a valid status")
+    @Pattern(regexp = "^(Chưa xử lý|Đã xử lý)$", message = "Please enter a valid status")
     private String trangThai;
     private Integer maNhanVien;
 }

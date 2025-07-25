@@ -447,7 +447,7 @@ public class SuKienService {
             url = "http://localhost:3000/" + successUrl;
         } else {
             OnlinePaymentUtil paymentUtil = new OnlinePaymentUtil();
-            url = paymentUtil.getPaymentURL(suKien.getTenSuKien(), Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
+            url = paymentUtil.getPaymentURL("Vé tham dự", Math.round(suKien.getPhiThamGia()), expireLong, successUrl, cancelUrl);
         }
 
         long currentSuccessfulRegistration = dangKyRepo.countByMaSuKienAndTrangThaiDangKy(maSuKien, "Thành công");

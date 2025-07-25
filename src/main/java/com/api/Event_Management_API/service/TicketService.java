@@ -88,7 +88,7 @@ public class TicketService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
         }
 
-        if (ticketOpt.get().getTrangThai().equals("Đã xử lí")) {
+        if (ticketOpt.get().getTrangThai().equals("Đã xử lý")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Ticket has already been handled"));
         }
 
@@ -103,7 +103,7 @@ public class TicketService {
 
         // Update ticket
         ticket.setNoiDungGiaiDap(request.getAnswer());
-        ticket.setTrangThai("Đã xử lí");
+        ticket.setTrangThai("Đã xử lý");
         ticket.setMaNhanVien(maNhanVien);
 
         ticketRepo.save(ticket);
@@ -135,7 +135,7 @@ public class TicketService {
                 tenNhanVien = nhanVienRepo.findById(ticket.getMaNhanVien())
                     .map(NhanVien::getHoTen)
                     .orElse("Unknown");
-            } else if ("Đã xử lí".equals(ticket.getTrangThai())) {
+            } else if ("Đã xử lý".equals(ticket.getTrangThai())) {
                 tenNhanVien = "Quản lí";
             }
 
@@ -167,7 +167,7 @@ public class TicketService {
             tenNhanVien = nhanVienRepo.findById(ticket.getMaNhanVien())
                 .map(NhanVien::getHoTen)
                 .orElse("Unknown");
-        } else if ("Đã xử lí".equals(ticket.getTrangThai())) {
+        } else if ("Đã xử lý".equals(ticket.getTrangThai())) {
             tenNhanVien = "Quản lí";
         }
 
