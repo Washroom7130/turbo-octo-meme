@@ -87,7 +87,7 @@ public class AdminService {
         taiKhoan.setMaTaiKhoan(UUID.randomUUID().toString());
         taiKhoan.setTenDangNhap(request.getTenDangNhap());
         taiKhoan.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
-        taiKhoan.setTrangThai("Hoạt Động");
+        taiKhoan.setTrangThai("Hoạt động");
         taiKhoan.setVaiTro("NhanVien");
         taiKhoan.setXacMinhEmail(true);
         taiKhoan.setNgayTao(LocalDateTime.now());
@@ -108,7 +108,7 @@ public class AdminService {
         }
 
         TaiKhoan taiKhoan = tkOpt.get();
-        taiKhoan.setTrangThai(action.equals("activate") ? "Hoạt Động" : "Dừng hoạt động");
+        taiKhoan.setTrangThai(action.equals("activate") ? "Hoạt động" : "Dừng hoạt động");
 
         taiKhoanRepo.save(taiKhoan);
         

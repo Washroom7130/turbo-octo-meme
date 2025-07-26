@@ -144,7 +144,7 @@ public class AuthService {
         }
 
         // Disallow login for account that has been deactivated
-        if (!"Hoạt Động".equals(taiKhoan.getTrangThai())) {
+        if (!"Hoạt động".equals(taiKhoan.getTrangThai())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect credentials"));
         }
 

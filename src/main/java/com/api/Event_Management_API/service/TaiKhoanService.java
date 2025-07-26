@@ -155,7 +155,7 @@ public class TaiKhoanService {
         }
 
         TaiKhoan taiKhoan = tkOpt.get();
-        taiKhoan.setTrangThai(action.equals("activate") ? "Hoạt Động" : "Dừng hoạt động");
+        taiKhoan.setTrangThai(action.equals("activate") ? "Hoạt động" : "Dừng hoạt động");
 
         taiKhoanRepo.save(taiKhoan);
         
