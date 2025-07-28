@@ -70,7 +70,7 @@ public class AuthService {
         tk.setMaTaiKhoan(UUID.randomUUID().toString());
         tk.setTenDangNhap(request.getUsername());
         tk.setMatKhau(passwordEncoder.encode(request.getPassword())); // Hash password
-        tk.setTrangThai("Hoạt Động");
+        tk.setTrangThai("Hoạt động");
         tk.setVaiTro("KhachHang");
         tk.setNgayTao(LocalDateTime.now());
         tk.setMaKhachHang(kh.getMaKhachHang());

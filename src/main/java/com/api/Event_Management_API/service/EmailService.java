@@ -27,7 +27,7 @@ public class EmailService {
 
     @Async
     public void sendPasswordResetEmail(String to, String token) {
-        String resetLink = "http://localhost:10000/reset_password/" + token;
+        String resetLink = "http://localhost:10000/reset-password/" + token;
 
         String subject = "Reset Your Password";
         String message = "Click the link below to reset your password:\n" + resetLink +
